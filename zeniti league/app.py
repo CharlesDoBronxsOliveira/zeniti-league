@@ -92,22 +92,16 @@ def calculate_fantasy_points(player):
 def get_team_players(team_name_in_db):
     conn = get_db_connection()
     try:
-        # მონაცემების წამოღება რეალური გუნდის სახელის მიხედვით
         players_raw = conn.execute("SELECT * FROM players WHERE real_team = ?", (team_name_in_db,)).fetchall()
-        
         players_list = []
         for p in players_raw:
             p_dict = dict(p)
-            # NULL-ების გასუფთავება უსაფრთხოებისთვის
             p_dict['goal'] = p_dict.get('goal') or 0
             p_dict['assist'] = p_dict.get('assist') or 0
             p_dict['saves'] = p_dict.get('saves') or 0
-            
-            # ქულების დათვლა დამატებული ფუნქციით
             p_dict['total_points'] = calculate_fantasy_points(p_dict)
             players_list.append(p_dict)
-            
-        return players_list
+        return players_list # ეს უნდა იყოს აქ
     finally:
         conn.close()
         
@@ -299,7 +293,7 @@ def leaderboard():
 
 @app.route('/support')
 def support():
-    return "Support page is under construction!"
+    return render_template('support.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
