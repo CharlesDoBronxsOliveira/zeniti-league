@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>გუნდები - Zeniti League</title>
+    <!-- Flask-ისთვის სტილების ფაილის სწორი მიბმა -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+
+<style>
+    :root {
+        --zeniti-green: #2ecc71;
+    }
+
+    body.teams-page {
+        background-color: #0a0a0a;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        color: white;
+    }
+
+    .team-header {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .team-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 4rem;
+        color: white;
+        letter-spacing: 3px;
+        text-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        margin: 0;
+    }
+
+    .teams-selection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        padding: 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .team-select-card {
+        background: linear-gradient(145deg, #161616 0%, #0a0a0a 100%);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 40px 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .team-select-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--zeniti-green);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .team-logo-circle {
+        width: 140px;
+        height: 140px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 2px solid rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        transition: 0.3s;
+        overflow: hidden;
+    }
+
+    .team-logo-circle img {
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
+        opacity: 0.9;
+        transition: 0.3s;
+    }
+
+    .team-select-card:hover .team-logo-circle {
+        border-color: rgba(46, 204, 113, 0.3);
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.1);
+    }
+
+    .team-select-card h3 {
+        font-family: 'Bebas Neue', sans-serif;
+        color: white;
+        font-size: 2.2rem;
+        margin: 10px 0;
+        letter-spacing: 1px;
+    }
+
+    .team-select-card:hover h3 {
+        color: var(--zeniti-green);
+    }
+
+    .view-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+        padding: 10px 25px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: 0.3s;
+        margin-top: 15px;
+    }
+
+    .team-select-card:hover .view-btn {
+        background: var(--zeniti-green);
+        border-color: var(--zeniti-green);
+        color: black;
+    }
+
+    footer {
+        text-align: center;
+        padding: 40px;
+        background: #050505;
+        border-top: 1px solid #1a1a1a;
+        margin-top: 80px;
+    }
+</style>
+
+<body class="teams-page">
+
+<div class="container">
+    <header class="team-header">
+        <h1 class="team-title">ლიგის გუნდები</h1>
+    </header>
+
+    <div class="teams-selection-grid">
+        
+        <!-- PHOENIX -->
+        <a href="{{ url_for('phoenix') }}" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/PHOENIX.png') }}" alt="Phoenix">
+            </div>
+            <h3>PHOENIX</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+        <!-- BATUMI -->
+        <a href="{{ url_for('batumi') }}" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/batumi.png') }}" alt="Batumi">
+            </div>
+            <h3>BATUMI</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+        <!-- GHELE -->
+        <a href="{{ url_for('ghele') }}" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/ghele.png') }}" alt="Ghele">
+            </div>
+            <h3>GHELE</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+        <!-- LEGHVA -->
+        <a href="{{ url_for('leghva') }}" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/leghva.png') }}" alt="Leghva">
+            </div>
+            <h3>LEGHVA</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+        <!-- SHAKHTIORI -->
+        <a href="{{ url_for('shakhtiori') }}" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/shakhtiori.png') }}" alt="Shakhtiori">
+            </div>
+            <h3>SHAKHTIORI</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+        <!-- DINAMO (ბაზიდან გამომდინარე) -->
+        <a href="#" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/centri.png') }}" alt="centri">
+            </div>
+            <h3>CENTRI</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+
+        <!-- CENTRI (ბაზიდან გამომდინარე) -->
+        <a href="#" class="team-select-card">
+            <div class="team-logo-circle">
+                <img src="{{ url_for('static', filename='images/centri.png') }}" alt="Centri">
+            </div>
+            <h3>CENTRI</h3>
+            <span class="view-btn">შემადგენლობა</span>
+        </a>
+
+    </div>
+</div>
+
+<footer>
+    <p>© 2026 <strong>Zeniti Inc.</strong> | ყველა უფლება დაცულია</p>
+    <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=61550479801345" style="color: #0088ff; text-decoration: none;">Facebook</a>
+    </div>
+</footer>
+
+</body>
+</html>

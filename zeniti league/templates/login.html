@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>შესვლა - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* დავამატოთ ფონი, რომ გვერდს მეტი სიღრმე ჰქონდეს */
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0b0b0b 100%);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            width: 380px; /* ოდნავ გავზარდე */
+            text-align: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #2ecc71; 
+            margin-bottom: 30px; 
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+        }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus { 
+            border-color: #2ecc71; 
+            outline: none; 
+            background: rgba(46, 204, 113, 0.05);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #2ecc71;
+            color: #0b0b0b;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover { 
+            background: #27ae60; 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        /* შეტყობინებების სტილები */
+        .msg-container { margin-bottom: 20px; }
+        .error-msg { color: #ff4757; font-size: 0.85rem; margin: 5px 0; font-weight: 600; }
+        .success-msg { color: #2ecc71; font-size: 0.85rem; margin: 5px 0; font-weight: 600; }
+
+        .register-link {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .register-link a { color: #2ecc71; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>LOGIN</h2>
+    
+    <div class="msg-container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              {# აქ ვამოწმებთ ტექსტს, რომ შესაბამისი ფერი მივცეთ #}
+              <p class="{% if 'წარმატებით' in message or 'წარმატებულია' in message %}success-msg{% else %}error-msg{% endif %}">
+                {{ message }}
+              </p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <form method="POST">
+        <div class="input-group">
+            <input type="text" name="username" placeholder="მომხმარებელი" required autocomplete="off">
+        </div>
+        <div class="input-group">
+            <input type="password" name="password" placeholder="პაროლი" required>
+        </div>
+        <button type="submit" class="btn-login">შესვლა</button>
+    </form>
+
+    <div class="register-link">
+        ჯერ არ გაქვს ანგარიში? <a href="{{ url_for('register') }}">დარეგისტრირდი</a>
+    </div>
+</div>
+
+</body>
+</html>

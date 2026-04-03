@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>რეგისტრაცია - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0b0b0b;
+            /* იგივე გრადიენტი რაც მთავარ გვერდზე გაქვს */
+            background-image: radial-gradient(circle at 50% -20%, rgba(46, 204, 113, 0.1) 0%, transparent 50%);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 350px;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #2ecc71; 
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus { 
+            border-color: #2ecc71; 
+            outline: none; 
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #2ecc71;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-login:hover { 
+            background: #27ae60; 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .footer-link {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .footer-link a {
+            color: #2ecc71;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>რეგისტრაცია</h2>
+    <p class="subtitle">შექმენი აქაუნთი და მართე გუნდი</p>
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="მომხმარებლის სახელი" required>
+        <input type="password" name="password" placeholder="პაროლი" required>
+        <div class="form-group">
+    <input type="text" name="team_name" placeholder="მაგ: ფენიქსი FC" required>
+</div>
+        <button type="submit" class="btn-login">რეგისტრაცია</button>
+        
+    </form>
+
+    <div class="footer-link">
+        უკვე გაქვს აქაუნთი? <a href="{{ url_for('login') }}">შესვლა</a>
+    </div>
+</div>
+
+</body>
+</html>

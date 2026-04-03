@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>მხარდაჭერა - ზენითი ლიგა</title>
+    <style>
+        /* 1. ძირითადი პარამეტრები */
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* მთავარი ღილაკი ზემოთ მარცხნივ */
+        .glass-back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .glass-back-button:hover {
+            background: rgba(57, 255, 20, 0.2);
+            border-color: #39FF14;
+            transform: translateY(-2px);
+        }
+
+        /* 2. მთავარი კონტეინერი */
+        .support-wrapper {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 3. სრულეკრანიანი ბარათი */
+        .support-card {
+            background: linear-gradient(180deg, rgba(26, 26, 26, 0.8) 0%, rgba(10, 10, 10, 1) 100%);
+            backdrop-filter: blur(15px);
+            padding: 100px 5% 60px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .support-card > * {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .support-card h1 {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .highlight-green {
+            color: #39FF14;
+            text-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+        }
+
+        /* 4. ინფორმაციის ბლოკები */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+            text-align: left;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-8px);
+            background: rgba(57, 255, 20, 0.05);
+            border-color: rgba(57, 255, 20, 0.4);
+        }
+
+        .info-item h3 {
+            color: #39FF14;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        /* 5. კონტაქტი */
+        .contact-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 50px;
+            margin-bottom: 60px;
+        }
+
+        .contact-btn {
+            display: inline-block;
+            background: #39FF14;
+            color: #000;
+            padding: 18px 50px;
+            border-radius: 50px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        /* 6. საბანკო ბარათები */
+        .donation-container {
+            margin-top: 50px;
+            padding-top: 50px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .bank-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .bank-card {
+            padding: 30px;
+            border-radius: 20px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bank-card.bog { background: linear-gradient(135deg, #f58220 0%, #d46b14 100%); }
+        .bank-card.tbc { background: linear-gradient(135deg, #00adef 0%, #008cc2 100%); }
+
+        .iban-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        code { font-family: monospace; font-size: 0.9rem; }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .copy-btn:hover { background: #fff; color: #000; }
+        .copy-btn.copied { background: #39FF14; color: #000; border-color: #39FF14; }
+
+        .label { display: block; font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; }
+        .receiver { font-weight: bold; font-size: 0.9rem; }
+
+        /* 7. ფუტერი - გასწორებული */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            background: #050505;
+            color: #888;
+            border-top: 1px solid rgba(57, 255, 20, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        footer strong { color: #fff; }
+
+        .social-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-links a { 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        
+        .social-links a:hover { opacity: 0.7; }
+
+        @media (max-width: 768px) {
+            .support-card { padding: 80px 20px 40px; }
+            .info-grid, .bank-cards { grid-template-columns: 1fr; }
+            .glass-back-button { top: 10px; left: 10px; padding: 8px 15px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ფიქსირებული ღილაკი -->
+    <a href="{{ url_for('home') }}" class="glass-back-button">
+        <span>🏠</span> მთავარი
+    </a>
+
+    <div class="support-wrapper">
+        <main class="support-card">
+            <h1>გახდი <span class="highlight-green">პარტნიორი</span></h1>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <h3>ადგილობრივი აუდიტორია</h3>
+                    <p>თქვენი ბრენდი ხილვადი ხდება რეგიონული ფეხბურთის ენთუზიასტებისთვის, რაც უზრუნველყოფს პირდაპირ კავშირს ერთგულ გულშემატკივართან.</p>
+                </div>
+                <div class="info-item">
+                    <h3>Live რეკლამა</h3>
+                    <p>ლოგოს განთავსება Facebook Live ტრანსლაციებისას და ვებ-გვერდის მთავარ პანელზე.</p>
+                </div>
+                <div class="info-item">
+                    <h3>განვითარება</h3>
+                    <p>იყავით ჯანსაღი ცხოვრების წესისა და ქართული სპორტის განვითარების მხარდამჭერი.</p>
+                </div>
+            </div>
+
+            <section class="contact-section">
+                <p style="margin-bottom: 25px; color: #888;">კორპორატიული თანამშრომლობისთვის მოგვწერეთ:</p>
+                <a href="mailto:contact@zntliga.ge" class="contact-btn">contact@zntliga.ge</a>
+            </section>
+
+            <section class="donation-container">
+                <h2 class="highlight-green" style="font-size: 1.6rem;">ინდივიდუალური მხარდაჭერა</h2>
+                <p style="color: #888; margin-bottom: 40px;">თითოეული გადარიცხვა ხმარდება ტურნირის ორგანიზებას</p>
+                
+                <div class="bank-cards">
+                    <div class="bank-card bog">
+                        <strong style="display:block; margin-bottom:10px;">საქართველოს ბანკი</strong>
+                        <div class="iban-box">
+                            <code id="bog-iban">GE09BG0000000605362031</code>
+                            <button class="copy-btn" onclick="copyText('bog-iban', this)">კოპირება</button>
+                        </div>
+                        <span class="label">მიმღები</span>
+                        <div class="receiver">დ.ქ.</div>
+                    </div>
+
+                    <div class="bank-card tbc">
+                        <strong style="display:block; margin-bottom:10px;">TBC Bank</strong>
+                        <div class="iban-box">
+                            <code id="tbc-iban">GE48TB7580845064300109</code>
+                            <button class="copy-btn" onclick="copyText('tbc-iban', this)">კოპირება</button>
+                        </div>
+                        <span class="label">მიმღები</span>
+                        <div class="receiver">ა.ქ.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>© 2026 <strong>Zeniti Inc.</strong> | ყველა უფლება დაცულია</p>
+        <p style="font-size: 0.8rem; letter-spacing: 1px; margin: 5px 0;">ZENITI LEAGUE - საუკეთესო საფეხბურთო გამოცდილება</p>
+        
+        <div class="social-links">
+            <a href="https://www.facebook.com/profile.php?id=61550479801345" style="color: #1877f2;">FACEBOOK</a>
+            <a href="#" style="color: #ff3366;">INSTAGRAM</a>
+        </div>
+    </footer>
+
+    <script>
+        function copyText(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "✓";
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

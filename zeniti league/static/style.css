@@ -1,0 +1,1027 @@
+/* ძირითადი პარამეტრები */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0f0f0f;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Header & Nav */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background-color: #1a1a1a;
+    border-bottom: 2px solid #39FF14;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.auth-section {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* დაშორება ღილაკებს შორის */
+}
+
+.auth-section a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+
+.auth-section a:not(.reg-btn):not(.live-btn):hover {
+    color: #00ff00;
+}
+
+.my-team-btn {
+    color: #00ff00 !important;
+    border: 1px solid #00ff00;
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: 0.3s;
+    text-decoration: none;
+}
+
+.my-team-btn:hover {
+    background: #00ff00;
+    color: #000 !important;
+}
+
+.logout-link {
+    color: #ff4d4d !important;
+    font-size: 0.9em;
+    text-decoration: none;
+}
+
+.logout-link span {
+    color: #00ff00;
+    margin-left: 5px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: #39FF14;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+}
+
+nav ul li {
+    margin: 0 20px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+nav ul li a:hover {
+    color: #39FF14;
+}
+
+.live-btn {
+    background-color: #ff4b2b;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 5px;
+    color: #fff !important;
+    text-decoration: none;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+}
+
+/* Hero Section */
+.hero {
+    height: 60vh;
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+}
+
+.cta-btn {
+    margin-top: 20px;
+    padding: 15px 30px;
+    background-color: #39FF14;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ცხრილის სტილები */
+.container {
+    padding: 50px 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* სათაურებს აცენტრებს */
+}
+
+/* ცხრილის "შემფუთავი" ბლოკი */
+.table-wrapper {
+    width: 100%;
+    max-width: 950px;    /* ზომა, რომელიც კარგად ჩანს ეკრანზე */
+    margin: 20px auto 50px auto; /* ცენტრში სვამს და ქვემოდან აძლევს სივრცეს */
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;    /* მომრგვალებულ კუთხეებში რომ ჩაჯდეს შიგთავსი */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* თავად ცხრილი */
+table {
+    width: 100%;
+    border-collapse: collapse; /* აქრობს ზედმეტ ხაზებს */
+    background-color: #1a1a1a;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+td {
+    padding: 15px;
+    text-align: center; /* ციფრები ცენტრში */
+    border-bottom: 1px solid #2a2a2a;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #252525;
+    color: #39FF14;
+    padding: 18px 15px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #333;
+    text-align: center; /* ყველა სათაური ცენტრში */
+}
+
+.reg-btn {
+    background-color: #00ff00;
+    color: #000000 !important;
+}
+
+.reg-btn:hover {
+    background-color: #00cc00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.active-row {
+    background-color: rgba(57, 255, 20, 0.1);
+}
+
+/* ანიმაცია ლაივ ღილაკისთვის */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+#countdown-container {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    display: inline-block;
+}
+
+#timer {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #39FF14; /* თქვენი ნეონის მწვანე */
+    margin-top: 10px;
+}
+
+#timer span {
+    background: #252525;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 0 5px;
+}
+
+/* მობილურისთვის */
+@media (max-width: 768px) {
+    /* ჰედერის გასწორება - ლოგო და მენიუ ერთმანეთის თავზე */
+    header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 5%;
+        text-align: center;
+    }
+
+    nav ul {
+        margin-top: 10px;
+    }
+
+    nav ul li {
+        margin: 0 10px;
+    }
+
+    /* Hero სექციის ტექსტის ზომა (სქრინის მიხედვით ყველაზე მნიშვნელოვანი) */
+    .hero {
+        height: auto;
+        padding: 60px 20px;
+        min-height: 70vh;
+    }
+
+    .hero h1 {
+        font-size: 1.8rem !important; /* რომ არ აიჭრას გვერდებზე */
+        line-height: 1.2;
+    }
+
+    /* ტაიმერის (Countdown) ადაპტაცია */
+    #countdown-container {
+        width: 100%;
+        max-width: 300px;
+        padding: 15px;
+        margin: 20px auto;
+    }
+
+    #timer {
+        font-size: 1.4rem;
+    }
+
+    #timer span {
+        padding: 5px 8px;
+        margin: 0 2px;
+        min-width: 40px;
+    }
+
+    /* ცხრილის (Table) სქროლი და ზომები */
+    .table-wrapper {
+        width: 100%;
+        border-radius: 0;
+        overflow-x: auto; /* რომ ცხრილი გვერდზე სრიალებდეს */
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 550px; /* რომ მონაცემები არ ჩაიკუმშოს */
+    }
+
+    .team-info {
+        gap: 8px;
+        padding-left: 10px;
+    }
+    
+    th, td {
+        padding: 10px 5px;
+        font-size: 0.75rem;
+    }
+
+    /* ღილაკის გასწორება */
+    .cta-btn {
+        width: 100%;
+        max-width: 250px;
+        font-size: 0.9rem;
+    }
+
+    /* თამაშების ბარათების (Match Cards) ადაპტაცია */
+    .matches-grid {
+        grid-template-columns: 1fr; /* სათითაოდ დალაგება */
+        padding: 10px;
+    }
+
+    .match-card {
+        padding: 15px;
+    }
+}
+
+.sponsors {
+    padding: 60px 5%;
+    text-align: center;
+    background: #111; /* ოდნავ განსხვავებული ტონი, რომ გამოჩნდეს სხვაობა */
+    border-top: 1px solid #333;
+    margin-top: 40px; /* დაშორება ცხრილებისგან */
+}
+
+.sponsors h2 {
+    color: #39FF14;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+}
+
+.sponsors-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.sponsor-placeholder {
+    border: 2px dashed #39FF14; /* წყვეტილი ჩარჩო "ადგილის" მისანიშნებლად */
+    padding: 30px;
+    border-radius: 15px;
+    background: rgba(57, 255, 20, 0.02);
+    transition: 0.3s;
+    max-width: 400px;
+    width: 100%;
+}
+
+.sponsor-placeholder:hover {
+    background: rgba(57, 255, 20, 0.05);
+    transform: translateY(-5px);
+}
+
+.support-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 25px;
+    background: #39FF14;
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.support-btn:hover {
+    background: #fff;
+    transform: scale(1.05);
+}
+.cta-banner {
+    margin: 60px 20px;
+    padding: 50px 20px;
+    background: linear-gradient(135deg, rgba(57, 255, 20, 0.05) 0%, rgba(0, 0, 0, 0.4) 100%);
+    border: 1px solid rgba(57, 255, 20, 0.2);
+    border-radius: 30px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* დეკორატიული ელემენტი ფონზე */
+.cta-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(57, 255, 20, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.cta-content h2 {
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.cta-content .highlight {
+    color: #39FF14;
+}
+
+.cta-content p {
+    color: #aaa;
+    font-size: 1.1rem;
+    margin-bottom: 35px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #39FF14;
+    color: #000;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px rgba(57, 255, 20, 0.2);
+}
+
+.cta-button:hover {
+    background: #fff;
+    transform: scale(1.05) translateY(-3px);
+    box-shadow: 0 15px 30px rgba(255, 255, 255, 0.2);
+}
+
+.cta-button svg {
+    transition: transform 0.3s ease;
+}
+
+.cta-button:hover svg {
+    transform: translateX(5px);
+}
+
+@media (max-width: 600px) {
+    .cta-banner { padding: 40px 20px; }
+    .cta-content h2 { font-size: 1.5rem; }
+    .cta-content p { font-size: 0.95rem; }
+}
+
+/* ყველა უჯრის ტექსტი იყოს ცენტრში, გარდა გუნდის სახელისა */
+table th, table td {
+    text-align: center;
+    padding: 15px 10px;
+}
+
+/* გუნდის სახელი იყოს მარცხნივ, რომ ლოგოს ადგილი დარჩეს */
+.team-name {
+    text-align: left;
+    font-weight: 600;
+}
+
+/* სხვაობის სვეტი გამოვყოთ ფერით */
+.diff {
+    font-weight: bold;
+    color: #39FF14; /* დადებითი სხვაობისთვის */
+}
+
+/* ცხრილის სათაურები (TH) */
+th {
+    border-bottom: 2px solid #333;
+    color: #39FF14;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* რომ ცხრილი არ იყოს ზედმეტად გაწელილი */
+#standings {
+    text-align: center; /* ტექსტს (სათაურს) აცენტრებს */
+}
+
+#standings h2 {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+.table-wrapper {
+    margin: 20px auto; /* ცხრილს აცენტრებს ჰორიზონტალურად */
+    max-width: 900px;  /* ზომა დაარეგულირეთ თქვენი გემოვნებით */
+}
+
+table {
+    width: 100%; /* ცხრილი შეავსებს wrapper-ის მთელ სიგანეს */
+}
+
+.positive { color: #39FF14; font-weight: bold; }
+.negative { color: #ff4b2b; font-weight: bold; }
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;          /* დაშორება ლოგოსა და ტექსტს შორის */
+    text-align: left;   /* ტექსტი მარცხნივ */
+    padding-left: 20px; /* ცოტა სივრცე კიდიდან */
+}
+
+.team-info span {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.team-logo {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: contain;
+    /* მთავარი გამოსავალი: */
+    mix-blend-mode: screen; /* თუ ფონი შავია და ლოგოზე თეთრი გინდა გაქრეს */
+    /* ან გამოიყენე multiply თუ პირიქითაა, მაგრამ საუკეთესოა: */
+    filter: brightness(1.1) contrast(1.1); 
+    background: transparent !important; 
+}
+
+tbody tr:hover {
+    background-color: rgba(57, 255, 20, 0.05);
+    transition: 0.2s;
+}
+
+.matches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    width: 100%;
+    max-width: 1000px;
+    margin-top: 30px;
+}
+
+.match-card {
+    background: #1a1a1a;
+    padding: 25px;
+    border-radius: 15px;
+    border-left: 4px solid #39FF14; /* ნეონის მწვანე აქცენტი */
+    transition: 0.3s;
+}
+
+.match-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(57, 255, 20, 0.1);
+}
+
+.match-date {
+    color: #39FF14;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 20px; /* ცოტა მეტი სივრცე გუნდებთან */
+    text-transform: uppercase;
+    text-align: center;  /* ეს გააშუალედებს ტექსტს */
+    width: 100%;         /* რომ მთელ სიგანეზე გაიშალოს და ცენტრი სწორად დაიჭიროს */
+}
+
+.match-teams {
+    display: flex;
+    justify-content: space-around; /* დაშორება თანაბრად გადაანაწილოს */
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 40%;
+}
+
+.team img {
+    width: 50px;
+    height: 50px;
+    background: transparent !important; /* აქ ეწერა თეთრი (white) და ის აჩენდა კვადრატს */
+    border-radius: 50%;
+    padding: 2px;
+    object-fit: contain;
+    /* დავამატოთ ეფექტი, რომ ლოგო არ დაიკარგოს მუქ ფონზე */
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+
+.vs {
+    font-weight: 900;
+    font-style: italic;
+    color: #444;
+}
+
+.match-venue {
+    font-size: 0.8rem;
+    color: #888;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+/* ბომბარდირების ცხრილის სრული დახვეწა */
+.scorer-wrapper table {
+    border-spacing: 0;
+    width: 100%;
+}
+
+.scorer-wrapper {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto 50px auto;
+    background: #1a1a1a;
+    border-radius: 15px; /* აქ დააყენე 15px, რომ თამაშების ბარათებს დაემსგავსოს */
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* სათაურების (TH) დახვეწა */
+.scorer-table th {
+    background-color: #2a2a2a; /* ოდნავ უფრო ღია ფონი */
+    padding: 20px 15px;
+    font-size: 0.9rem;
+    color: #39FF14;
+    text-transform: uppercase;
+}
+
+/* უჯრედების (TD) დახვეწა */
+.scorer-table td {
+    padding: 20px 15px;
+    border-bottom: 1px solid #333;
+    font-size: 1.1rem; /* ტექსტი უფრო იკითხვადი რომ იყოს */
+}
+
+/* ფეხბურთელის სვეტის გასწორება */
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* justify-content წავშალეთ, რომ ავტომატურად დაცენტრდეს */
+    justify-content: center; 
+    /* padding-left-იც აღარ გვჭირდება */
+}
+
+
+/* გუნდის დასახელება ოდნავ მინავლებული */
+.scorer-table td:nth-child(3) {
+    color: #aaa;
+    font-size: 1rem;
+}
+
+/* გოლების რაოდენობა - მთავარი აქცენტი */
+.goals-count {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #39FF14;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); /* ნეონის ეფექტი */
+}
+
+/* Row-ზე მიტანისას ეფექტი */
+.scorer-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.player-photo {
+    width: 45px;
+    height: 45px;
+    border: 2px solid #39FF14;
+    padding: 2px;
+    background: #000;
+    border-radius: 50% !important; /* აი ეს დააბრუნებს წრეს */
+    object-fit: cover;
+}
+
+.zn-team-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    padding: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.zn-card {
+    background: #1a1a1a;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #333;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* უფრო რბილი მოძრაობა */
+    text-align: center;
+    padding-bottom: 20px;
+    position: relative;
+}
+
+.zn-card:hover {
+    transform: translateY(-12px) scale(1.02); /* ოდნავ იზრდება კიდეც */
+    border-color: #00d4ff; /* ჩარჩო ნათდება */
+    /* ლურჯი ნეონის განათება ბარათის გარშემო */
+    box-shadow: 0 15px 35px rgba(0, 212, 255, 0.25);
+}
+
+.zn-card-link {
+    text-decoration: none; /* ხაზგასმის მოსაშორებლად */
+    color: inherit;        /* ტექსტის ფერის შესანარჩუნებლად */
+    display: block;        /* რომ მთლიანი ბარათი იყოს "დაჭერადი" */
+}
+
+.zn-card:hover .zn-logo-wrap {
+    border-color: #00d4ff;
+    transform: rotate(5deg); /* ოდნავ იხრება, რაც "ცოცხალ" ეფექტს აძლევს */
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+/* ზედა ფერადი ზოლი */
+.zn-header {
+    height: 80px;
+    width: 100%;
+}
+
+/* ლოგოს კონტეინერი */
+.zn-logo-wrap {
+    margin-top: -50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: #fff;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.zn-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.zn-info {
+    padding: 15px;
+    margin-top: 10px;
+}
+
+/* სპეციალური კლასი ფენიქსისთვის - უფრო დიდი ზუმი */
+/* ლოგოს ზუმი (რაც ფენიქსისთვის გამოვიყენეთ) */
+.zn-logo-zoom {
+    transform: scale(2.2);
+    object-fit: cover;
+}
+
+.zn-name {
+    color: #fff;
+    font-size: 1.6rem;
+    margin: 10px 0;
+}
+
+.zn-captain {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.zn-badge {
+    display: inline-block;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+/* მწვანე ბეიჯი */
+.bg-win {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+/* წითელი ბეიჯი */
+.bg-loss {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.players-section {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* კაპიტნის ბარათი - ოქროსფერი აქცენტით */
+.captain-card {
+    border-left: 5px solid #f1c40f !important;
+    background: linear-gradient(90deg, #2c2c10, #1a1a1a) !important;
+    margin-bottom: 20px;
+}
+
+/* მეკარის ბარათი - სტაფილოსფერი აქცენტით */
+.goalkeeper-card {
+    border-left: 5px solid #e67e22 !important;
+    background: linear-gradient(90deg, #2c1e10, #1a1a1a) !important;
+    margin-bottom: 20px;
+}
+
+/* როლის ბეიჯი (C ან GK) */
+.role-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #888;
+}
+
+.captain-card .role-badge { color: #f1c40f; border: 1px solid #f1c40f; }
+.goalkeeper-card .role-badge { color: #e67e22; border: 1px solid #e67e22; }
+
+/* ზოგადი ბარათის სტილი */
+.player-card {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    border-left: 4px solid #00d4ff;
+    transition: 0.3s;
+}
+
+.player-card:hover {
+    transform: scale(1.03);
+}
+
+.back-link {
+    color: #888;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin: 20px;
+}
+.back-link:hover { color: #fff; }
+
+.team-header { text-align: center; margin-bottom: 30px; }
+
+
+/* --- მობილურის სპეციალური ინტერფეისი --- */
+@media (max-width: 768px) {
+    /* შენი ძველი კოდი (რჩება უცვლელად) */
+    .container {
+        padding: 20px 15px;
+    }
+
+    .team-title {
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+    }
+
+    .players-grid {
+        grid-template-columns: 1fr !important; 
+        gap: 15px;
+    }
+
+    .player-card {
+        height: 110px;
+    }
+
+    .p-num {
+        font-size: 1.5rem;
+        min-width: 35px;
+    }
+
+    .p-info h4 {
+        font-size: 1.2rem;
+    }
+
+    .stat-value {
+        font-size: 1.6rem;
+    }
+
+    /* --- ახალი კოდი თამაშების ბარათებისთვის (ამას ვამატებთ) --- */
+    
+    .match-card {
+        padding: 15px; /* ბარათის შიდა დაშორება მცირდება */
+    }
+    
+    .match-date {
+        text-align: center; /* დრო ცენტრდება */
+        font-size: 0.85rem;
+        width: 100%;
+        display: block;
+    }
+
+    .match-teams {
+        flex-direction: row; /* გუნდები რჩება გვერდიგვერდ */
+        justify-content: space-around;
+        gap: 5px;
+    }
+
+    .team img {
+        width: 40px; /* ლოგოები ცოტა პატარავდება მობილურისთვის */
+        height: 40px;
+    }
+
+    .team span {
+        font-size: 0.9rem; /* გუნდის სახელის ზომა */
+    }
+}
+
+/* ჩამოსაშლელი კონტეინერი */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* ჩამოსაშლელი შიგთავსი (თავიდან დამალულია) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #1a1a1a; /* მუქი ფონი, როგორც საიტს უხდება */
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
+    z-index: 100;
+    border-radius: 8px;
+    border: 1px solid var(--zeniti-green);
+    top: 100%;
+}
+
+/* ლინკები ჩამოსაშლელ მენიუში */
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    /* შავი ფონის ნაცვლად ვიყენებთ ნახევრად გამჭვირვალეს */
+    background: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(10px); /* დანისვლის ეფექტი */
+    -webkit-backdrop-filter: blur(10px);
+    
+    color: white;
+    margin-top: 80px;
+    width: 100%;
+    
+    /* ზედა ნეონის ზოლი, რომელიც ბადის ხაზებს ეხამება */
+    border-top: 1px solid rgba(0, 255, 65, 0.3);
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+footer p {
+    margin: 8px 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+footer strong {
+    color: var(--zen-green); /* Zeniti Inc. გახდება მწვანე */
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+/* სოციალური ლინკების სტილი */
+.social-links {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.social-links a {
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    padding: 5px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* მაუსის მიტანისას (Hover) */
+.dropdown-content a:hover {
+    background-color: var(--zeniti-green);
+    color: black;
+}
+
+/* მაუსის მიტანისას სიის გამოჩენა */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* პატარა ისარი ტექსტის გვერდით */
+.dropbtn::after {
+    margin-left: 5px;
+}

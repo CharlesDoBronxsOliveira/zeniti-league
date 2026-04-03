@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeniti League - Playoffs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Bebas+Neue&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<style>
+:root {
+    --zen-green: #00ff41;
+    --zen-gold: #ffd700;
+}
+
+.p-page {
+    /* ეს კოდი დააბრუნებს ცენტრალურ განათებას და მუქ კიდეებს */
+    background: radial-gradient(circle at center, #002b0c 0%, #000b03 60%, #000000 100%);
+    background-attachment: fixed; /* ფონი არ გაყვება სკროლს */
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.p-bracket-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0; /* სივრცეები გავაქრეთ */
+    margin-top: 20px;
+    transform: scale(1.5);
+    transform-origin: center;
+}
+
+.p-back-btn {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(0, 255, 65, 0.1);
+    border: 1px solid var(--zen-green);
+    border-radius: 12px;
+    color: var(--zen-green);
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    transition: 0.3s;
+    z-index: 100;
+}
+
+.league-logo-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1; /* ბადის უკან რომ იყოს */
+    opacity: 0.05; /* ოდნავ შესამჩნევი */
+    pointer-events: none; /* ხელი რომ არ შეგვიშალოს */
+}
+
+.league-logo-box img {
+    width: 500px; /* დიდი ზომის ლოგო ფონზე */
+}
+
+.p-back-btn:hover {
+    background: var(--zen-green);
+    color: black;
+}
+
+.p-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 400px;
+    position: relative;
+}
+
+/* მატჩის ბლოკი */
+.p-match {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 6px;
+    width: 180px;
+    margin: 15px 0;
+    position: relative;
+    z-index: 2;
+}
+
+.p-team {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.05);
+}
+.p-team:last-child { border: none; }
+.p-team img { width: 22px; margin-right: 10px; }
+.p-score { margin-left: auto; color: var(--zen-green); font-family: 'Orbitron'; }
+
+/* --- ხაზების ლოგიკა --- */
+
+/* ნახევარფინალების დამაკავშირებელი ვერტიკალური ხაზი */
+.p-match-pair {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 300px;
+    position: relative;
+    padding-right: 40px;
+}
+
+.p-match-pair::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 2px;
+    background: var(--zen-green);
+    box-shadow: 0 0 10px var(--zen-green);
+}
+
+/* ჰორიზონტალური ხაზები მატჩებიდან */
+.p-match::after {
+    content: "";
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    width: 40px;
+    height: 2px;
+    background: var(--zen-green);
+}
+
+/* ფინალის ხაზები */
+.p-final-col {
+    padding: 0 40px;
+}
+
+.p-final-match::before {
+    content: "";
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    width: 40px;
+    height: 2px;
+    background: var(--zen-green);
+}
+
+/* ჩემპიონის ბარათი */
+.p-winner-card {
+    border: 2px solid var(--zen-gold);
+    background: rgba(0, 43, 12, 0.7);
+    padding: 35px 30px; /* მეტი სივრცე გვერდებზე */
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
+    min-width: 240px; /* მინიმალური სიგანე */
+}
+
+.p-winner-img { width: 100px; filter: drop-shadow(0 0 10px var(--zen-gold)); }
+.p-winner-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem; /* გავზარდოთ სახელი */
+    color: white;
+    margin-top: 15px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+.p-winner-label { color: var(--zen-gold); font-size: 0.7rem; letter-spacing: 2px; }
+
+/* სხვა ელემენტები */
+.p-main-title { font-family: 'Bebas Neue'; font-size: 3rem; margin: 20px 0; }
+.p-nav-btn { position: absolute; top: 20px; left: 20px; color: var(--zen-green); text-decoration: none; border: 1px solid; padding: 5px 15px; border-radius: 8px; }
+.p-header-stats { background: rgba(0, 255, 65, 0.1); padding: 8px 20px; border-radius: 20px; margin-top: 20px; font-size: 0.9rem; }
+
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    /* შავი ფონის ნაცვლად ვიყენებთ ნახევრად გამჭვირვალეს */
+    background: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(10px); /* დანისვლის ეფექტი */
+    -webkit-backdrop-filter: blur(10px);
+    
+    color: white;
+    margin-top: 80px;
+    width: 100%;
+    
+    /* ზედა ნეონის ზოლი, რომელიც ბადის ხაზებს ეხამება */
+    border-top: 1px solid rgba(0, 255, 65, 0.3);
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+footer p {
+    margin: 8px 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+footer strong {
+    color: var(--zen-green); /* Zeniti Inc. გახდება მწვანე */
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.social-links {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.social-links a {
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    padding: 5px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+</style>
+
+<body class="p-page">
+
+    <a href="{{ url_for('home') }}" class="p-back-btn">
+        <span class="icon">🏠</span> <span class="text">მთავარი</span>
+    </a>
+
+    <div class="p-header-stats">
+        <span>🏆 4 გუნდი</span> | <span>⚽ 43 გოლი</span> | <span>📅 2026 ზამთარი</span>
+    </div>
+
+    <h1 class="p-main-title">ტურნირის ბადე</h1>
+
+    <div class="p-bracket-wrapper">
+        <div class="p-column">
+            <div class="p-match-pair">
+                <div class="p-match">
+                    <div class="p-team"><img src="{{ url_for('static', filename='images/phoenix.png') }}"> ფენიქსი <span class="p-score">7</span></div>
+                    <div class="p-team"><img src="{{ url_for('static', filename='images/centri.png') }}"> ცენტრი <span class="p-score">6</span></div>
+                </div>
+                <div class="p-match">
+                    <div class="p-team"><img src="{{ url_for('static', filename='images/shakhtiori.png') }}"> შახტიორი <span class="p-score">9(3)</span></div>
+                    <div class="p-team"><img src="{{ url_for('static', filename='images/batumi.png') }}"> LAST GOAL <span class="p-score">9(2)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-column p-final-col">
+            <div class="p-match p-final-match">
+                <div class="p-team"><img src="{{ url_for('static', filename='images/phoenix.png') }}"> ფენიქსი <span class="p-score">6(2)</span></div>
+                <div class="p-team"><img src="{{ url_for('static', filename='images/shakhtiori.png') }}"> შახტიორი <span class="p-score">6(1)</span></div>
+            </div>
+        </div>
+
+        <div class="p-column">
+            <div class="p-winner-card">
+                <div class="p-winner-label">ჩემპიონი</div>
+                <img src="{{ url_for('static', filename='images/phoenix.png') }}" class="p-winner-img">
+                <div class="p-winner-name">ფენიქსი</div>
+                <div class="p-winner-year">2026</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+    <p>© 2026 <strong>Zeniti Inc.</strong> | ყველა უფლება დაცულია</p>
+    <p style="font-size: 0.8rem; letter-spacing: 1px;">ZENITI LEAGUE - საუკეთესო საფეხბურთო გამოცდილება</p>
+    
+    <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=61550479801345" style="color: #1877f2;">FACEBOOK</a>
+        <a href="#" style="color: #ff3366;">INSTAGRAM</a>
+    </div>
+</footer>
+
+</body>
+</html>

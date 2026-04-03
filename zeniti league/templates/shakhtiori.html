@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>შახტიორი - Zeniti League</title>
+    <style>
+
+        /* 1. ფონტების იმპორტი */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;700&display=swap');
+
+* {
+    box-sizing: border-box; /* ეს ყველაზე მნიშვნელოვანია */
+}
+
+:root {
+    --zeniti-green: #2ecc71;
+    --dark-bg: #0b0b0b;
+    --card-bg: rgba(26, 26, 26, 0.98);
+}
+
+/* 2. ზოგადი სტილი და სტადიონის ფონი */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--dark-bg);
+    background-image: 
+        radial-gradient(circle at 50% -20%, rgba(46, 204, 113, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(46, 204, 113, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.pitch-line {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 20px;
+    
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* 3. გუნდის ჰედერი */
+.team-header {
+    width: 100%;
+    display: flex;
+    justify-content: center; /* ჰორიზონტალური ცენტრი */
+    padding: 20px 0;
+    margin-bottom: 0px !important; 
+    padding-bottom: 5px !important;
+}
+
+.logo-box {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    border: 3px solid var(--zeniti-green);
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.2);
+}
+
+.logo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.15); /* ლოგოს ცენტრირება */
+}
+
+.team-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    margin: 0;
+    letter-spacing: 4px;
+}
+
+/* 4. ბარათების Grid */
+.players-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 40px; /* შიდა დაშორება ჩარჩოდან */
+    margin-top: 20px;
+    
+    /* აი, ეს არის ის მწვანე ჩარჩო */
+    border: 1px solid rgba(46, 204, 113, 0.4); 
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.02); /* ძალიან მკრთალი ფონი სიღრმისთვის */
+    backdrop-filter: blur(5px);
+    box-shadow: inset 0 0 40px rgba(46, 204, 113, 0.05); /* შიდა ნათება */
+    
+    width: 100%;
+    max-width: 1000px; /* რომ ძალიან არ გაიწელოს დიდ ეკრანზე */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 5. 3D Flip ეფექტი */
+.player-card {
+    background: transparent;
+    perspective: 1000px;
+    height: 130px;
+    width: 300px; /* ფიქსირებული სიგანე, რომ ხაზზე ლამაზად ჩაჯდეს */
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+}
+
+.player-card:hover .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+}
+
+/* 6. ბარათის წინა მხარე */
+.card-front {
+    background: var(--card-bg);
+    padding: 0 15px; /* დავაპატარავეთ გვერდითა დაშორება (იყო 30) */
+}
+
+.p-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--zeniti-green);
+    margin-right: 25px;
+    min-width: 55px;
+}
+
+.p-info h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem; /* ოდნავ შევამცირეთ ზომა (იყო 1.8) */
+    margin: 0;
+    letter-spacing: 1px;
+    line-height: 1.1; /* ხაზებს შორის მანძილი */
+    word-wrap: break-word;
+}
+
+.p-info p {
+    font-size: 0.9rem;
+    color: #888;
+    margin: 5px 0 0;
+    text-transform: uppercase;
+}
+
+/* 7. ბარათის უკანა მხარე (სტატისტიკა) */
+.card-back {
+    background: linear-gradient(145deg, #161616 0%, #0a0a0a 100%);
+    transform: rotateY(180deg);
+    padding: 10px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* სტატისტიკის განლაგება ჰორიზონტალურად */
+.stats-grid {
+    display: flex;
+    justify-content: space-between; /* მონაცემების უკეთესი გადანაწილება */
+    align-items: center;
+    width: 100%;
+    gap: 15px;
+}
+
+/* სტატისტიკის ინტერაქტიული ვიზუალი */
+.stat-item {
+    text-align: center;
+    flex: 1; /* თითოეული მონაცემი იკავებს თანაბარ ადგილს */
+    position: relative;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02); /* ნაზი ფონი */
+    border: 1px solid rgba(255,255,255,0.03);
+    transition: 0.3s;
+}
+
+/* მაუსის მიტანისას ოდნავი glow effect */
+.stat-item:hover {
+    background: rgba(46, 204, 113, 0.05);
+    border-color: rgba(46, 204, 113, 0.2);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.1);
+}
+
+/* დასახელება (მატჩი, გოლი) */
+.stat-item span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem; /* ოდნავ გავზარდოთ */
+    color: var(--zeniti-green);
+    display: block;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px rgba(46, 204, 113, 0.3);
+}
+
+/* დიდი ციფრები */
+.stat-value {
+    font-family: 'Orbitron', sans-serif; /* სპორტული ფონტი ციფრებისთვის */
+    font-size: 2.5rem; /* ციფრები მნიშვნელოვნად გავზარდეთ */
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+/* სპეციალური როლები ამოტრიალებულზეც რომ დარჩეს (ოქროსფერი/სტაფილოსფერი ხაზები) */
+.captain .card-inner .card-back { border-left: 5px solid #f1c40f; }
+.goalkeeper .card-inner .card-back { border-left: 5px solid #e67e22; }
+
+/* 9. უკანა ლინკი */
+.back-link {
+    color: var(--zeniti-green);
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 40px;
+    transition: 0.3s;
+}
+.back-link:hover { text-shadow: 0 0 10px var(--zeniti-green); }
+
+
+
+/* --- მობილურის სპეციალური ინტერფეისი --- */
+@media (max-width: 768px) {
+    /* კონტეინერის დაშორებები გვერდებიდან */
+    .container {
+        padding: 20px 15px;
+    }
+
+    /* სათაური პატარავდება, რომ გვერდზე არ გავიდეს */
+    .team-title {
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+    }
+
+    /* მთავარი ცვლილება: ბარათები ლაგდება სათითაოდ */
+    .players-grid {
+        grid-template-columns: 1fr !important; 
+        gap: 15px;
+    }
+
+    /* ბარათის ზომები მობილურისთვის */
+    .player-card {
+        height: 110px;
+    }
+
+    .p-num {
+        font-size: 1.5rem;
+        min-width: 35px;
+    }
+
+    .p-info h4 {
+        font-size: 1.2rem;
+    }
+
+    /* სტატისტიკა ამოტრიალებისას */
+    .stat-value {
+        font-size: 1.6rem;
+    }
+}
+
+.back-button-modern {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    text-decoration: none;
+    color: #00ff41; 
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+    background: rgba(0, 255, 65, 0.1);
+    border-left: 3px solid #00ff41;
+    backdrop-filter: blur(5px);
+}
+
+.back-button-modern:hover {
+    background: rgba(0, 255, 65, 0.25);
+    transform: translateX(8px);
+    color: white;
+    box-shadow: -5px 0 20px rgba(0, 255, 65, 0.4);
+}
+
+.btn-icon {
+    margin-right: 12px;
+    font-weight: bold;
+}
+
+/* --- უკან დაბრუნების "მინის" ღილაკის სტილი --- */
+.glass-back-button {
+    position: fixed; /* ეკრანზე იქნება მიჭედებული სქროლის დროსაც */
+    top: 30px;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 25px;
+    text-decoration: none;
+    z-index: 1000;
+    
+    /* ფონი და მომრგვალებული ფორმა (როგორც შენს იდეაში) */
+    background: rgba(10, 25, 10, 0.4); /* გამჭვირვალე მწვანე ფონი */
+    border: 2px solid rgba(0, 255, 65, 0.1); /* ძალიან მკრთალი მწვანე ჩარჩო */
+    border-radius: 20px; /* მომრგვალებული კუთხეები */
+    
+    /* სიღრმე და სიბნელე */
+    backdrop-filter: blur(15px); /* "უკანა ფონის დაბინდვის" ეფექტი (Glassmorphism) */
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3), /* ჩრდილი სიღრმისთვის */
+        0 0 10px rgba(0, 255, 65, 0.1); /* ნაზი ნათება */
+    
+    transition: all 0.4s ease;
+}
+
+/* Hover (მაუსის მიტანის) ეფექტი */
+.glass-back-button:hover {
+    background: rgba(10, 25, 10, 0.7); /* ფონი უფრო მკვეთრი ხდება */
+    border-color: #00ff41; /* ჩარჩო ინთება მკვეთრი ნეონით */
+    box-shadow: 
+        0 0 30px rgba(0, 255, 65, 0.3), /* ნეონის "Glow" */
+        0 12px 40px rgba(0, 0, 0, 0.5); /* უფრო ღრმა ჩრდილი */
+    transform: translateY(-3px); /* ოდნავ აწევის ეფექტი */
+}
+
+/* აიქონისა და ტექსტის სტილი */
+.home-icon {
+    font-size: 1.4rem;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 65, 0.3)); /* ნაზი Glow აიქონზე */
+}
+
+.home-text {
+    font-family: 'Bebas Neue', sans-serif; /* სპორტული ფონტი */
+    font-size: 1.2rem;
+    color: #00ff41; /* ნეონის მწვანე */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(0, 255, 65, 0.4); /* ტექსტის Glow */
+}
+
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    /* შავი ფონის ნაცვლად ვიყენებთ ნახევრად გამჭვირვალეს */
+    background: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(10px); /* დანისვლის ეფექტი */
+    -webkit-backdrop-filter: blur(10px);
+    
+    color: white;
+    margin-top: 80px;
+    width: 100%;
+    
+    /* ზედა ნეონის ზოლი, რომელიც ბადის ხაზებს ეხამება */
+    border-top: 1px solid rgba(0, 255, 65, 0.3);
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+footer p {
+    margin: 8px 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+footer strong {
+    color: var(--zen-green); /* Zeniti Inc. გახდება მწვანე */
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+/* სოციალური ლინკების სტილი */
+.social-links {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.social-links a {
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    padding: 5px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.1);
+}
+    </style>
+</head>
+<body>
+
+<a href="{{ url_for('home') }}" class="glass-back-button">
+    <span class="home-icon">🏠</span>
+    <span class="home-text">მთავარი</span>
+</a>
+
+<header class="team-header">
+    <div class="header-content">
+        <div class="logo-box">
+            <img src="{{ url_for('static', filename='images/shakhtiori.png') }}" class="zn-logo zn-logo-zoom" alt="shakhtiori">
+        </div>
+        <h1 class="team-title">შახტიორი / Kobuleti</h1>
+    </div>
+</header>
+
+<div class="container">
+    <div class="players-grid">
+        
+        <div class="pitch-line">
+            {% for player in players if 'თავდამსხმელი' in player.position %}
+            <div class="player-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <span class="p-num">{{ player.shirt_number }}</span>
+                        <div class="p-info">
+                            <h4>{{ player.name }}</h4>
+                            <p>{{ player.position }}</p>
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <div class="stats-grid">
+                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
+                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for player in players if 'ნახევარმცველი' in player.position and 'თავდამსხმელი' not in player.position %}
+            <div class="player-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <span class="p-num">{{ player.shirt_number }}</span>
+                        <div class="p-info">
+                            <h4>{{ player.name }}</h4>
+                            <p>{{ player.position }}</p>
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <div class="stats-grid">
+                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
+                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for player in players if 'მცველი' in player.position and 'ნახევარმცველი' not in player.position %}
+            <div class="player-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <span class="p-num">{{ player.shirt_number }}</span>
+                        <div class="p-info">
+                            <h4>{{ player.name }}</h4>
+                            <p>{{ player.position }}</p>
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <div class="stats-grid">
+                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
+                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for player in players if 'მეკარე' in player.position %}
+            <div class="player-card goalkeeper">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <span class="p-num">{{ player.shirt_number }}</span>
+                        <div class="p-info">
+                            <h4>{{ player.name }}</h4>
+                            <p>{{ player.position }}</p>
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <div class="stats-grid">
+                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
+                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <p>© 2026 <strong>Zeniti Inc.</strong> | ყველა უფლება დაცულია</p>
+    <p style="font-size: 0.8rem; letter-spacing: 1px;">ZENITI LEAGUE - საუკეთესო საფეხბურთო გამოცდილება</p>
+    
+    <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=61550479801345" style="color: #1877f2;">FACEBOOK</a>
+        <a href="#" style="color: #ff3366;">INSTAGRAM</a>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>ჩემი გუნდი - Zeniti League</title>
+    <style>
+        /* აქ ჩასვი ის CSS, რაც ლეღვას კოდში გვქონდა (Pitch, Card-front, Card-back და ა.შ.) */
+        /* ... */
+        
+        .total-score-banner {
+            text-align: center;
+            padding: 30px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #2ecc71;
+            letter-spacing: 2px;
+        }
+
+        /* ფენტეზი მოედნის სპეციალური კონტეინერი */
+        .fantasy-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+    </style>
+</head>
+<body style="background-color: #0b0b0b; color: white;">
+
+    <div class="total-score-banner">
+        ჩემი გუნდის ქულები: {{ total_points }}
+    </div>
+
+    <div class="fantasy-container">
+        <div class="players-grid" style="border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 30px; padding: 40px;">
+            
+            <div class="pitch-line" style="margin-bottom: 40px;">
+                {% for p in team if 'თავდამსხმელი' in p.position %}
+                    {% include 'player_card_snippet.html' %}
+                {% endfor %}
+            </div>
+
+            <div class="pitch-line" style="margin-bottom: 40px;">
+                {% for p in team if 'ნახევარმცველი' in p.position %}
+                    {% include 'player_card_snippet.html' %}
+                {% endfor %}
+            </div>
+
+            <div class="pitch-line" style="margin-bottom: 40px;">
+                {% for p in team if 'მცველი' in p.position %}
+                    {% include 'player_card_snippet.html' %}
+                {% endfor %}
+            </div>
+
+            <div class="pitch-line">
+                {% for p in team if 'მეკარე' in p.position %}
+                    {% include 'player_card_snippet.html' %}
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

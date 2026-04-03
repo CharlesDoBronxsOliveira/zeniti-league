@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ააწყვე გუნდი - Pitch View - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+
+:root {
+    --zeniti-green: #2ecc71;
+    --pitch-green: #1a472a; 
+    --pitch-dark: #163d24; /* ოდნავ მუქი ფერი ზოლებისთვის */
+    --pitch-lines: rgba(46, 204, 113, 0.4); /* ხაზები ახლა Zeniti Green-ის ტონალობაშია */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+
+    /* --- ფონის პარამეტრები --- */
+    /* ვიყენებთ მუქ გრადიენტს ზემოდან, რომ სურათმა ტექსტი არ გადაფაროს */
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), 
+                url('/static/images/stadium.jpg');
+    
+    /* სურათი რომ ყოველთვის მთელ ეკრანზე იყოს გაჭიმული */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* ეს ეფექტი ძაან უხდება, სურათი არ მოძრაობს სქროლისას */
+    background-repeat: no-repeat;
+    
+    /* ცენტრში მოსატანად, თუ მთლიანი კონტეინერი Flex-ში გაქვს */
+    overflow-x: hidden;
+    flex-direction: column;
+}
+    
+
+
+        .container {
+    width: 95%;           /* ეკრანის თითქმის მთელი სიგანე */
+    max-width: 1200px;    /* მაქსიმუმ ამდენზე გაიშალოს */
+    margin: 0 auto;
+    
+    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+        .container, .pitch-container {
+    background: rgba(0, 0, 0, 0.3); /* ოდნავ გამჭვირვალე შავი ფონი */
+    backdrop-filter: blur(10px);    /* "შუშის" ეფექტი */
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin-top: 20px;
+}
+
+       /* სტატისტიკის პანელის გასწორება */
+.stats-bar {
+    display: flex; 
+    justify-content: space-around;
+    background: rgba(10, 10, 10, 0.9);
+    backdrop-filter: blur(15px);
+    padding: 15px; 
+    border-radius: 20px;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    width: 100%;           /* გაუსწორდეს სტადიონის სიგანეს */
+    max-width: 1100px;     /* იგივე რაც pitch-ზე */
+    margin-bottom: 20px;
+}
+
+.filled-player-visual {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 5px;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    transition: all 0.3s ease;
+}
+
+.filled-player-visual:hover {
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+    border-color: var(--zeniti-green);
+}
+
+.p-shirt-num {
+    background: var(--zeniti-green) !important; /* ნომერი იყოს მწვანე ფონზე შავი ტექსტით */
+    color: black !important;
+    font-weight: 900;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.stat-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stat-box {
+    text-align: center;
+}
+        .stat-value { 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 1.8rem; 
+    color: var(--zeniti-green); 
+    font-weight: 900; 
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+}
+        .stat-label { 
+    color: #aaa; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    margin-top: 5px;
+}
+
+        /* --- სტადიონის (Pitch) სტილები --- */
+        
+.pitch {
+    background-color: var(--pitch-green);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        var(--pitch-green),
+        var(--pitch-green) 60px,
+        var(--pitch-dark) 60px,
+        var(--pitch-dark) 120px
+    );
+    border: 3px solid var(--zeniti-green);
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.15), 0 20px 50px rgba(0,0,0,0.5);
+    border-radius: 20px;
+    height: 750px; /* ოდნავ გავზარდოთ სიმაღლე უკეთესი პროპორციებისთვის */
+    
+    /* --- შესწორებული ნაწილი --- */
+    width: 100%; 
+    max-width: 950px; /* 1100-ზე Sidebar-თან ერთად შეიძლება ეკრანზე არ დაეტიოს */
+    margin: 0 auto;  /* ცენტრირება content-area-ს შიგნით */
+    /* -------------------------- */
+    
+    position: relative;
+    overflow: hidden;
+}
+
+.content-area {
+    flex: 1;
+    margin-left: 250px; /* Sidebar-ის სიგანე */
+    padding: 20px 40px; /* ზემოდან ნაკლები დაშორება */
+    display: flex;
+    flex-direction: column; /* ელემენტები დალაგდეს ვერტიკალურად */
+    align-items: center; /* ცენტრირება */
+    min-height: calc(100vh - 80px);
+}
+
+.pitch::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px;
+    /* წრე ახლა Zeniti-ს ხაზებით არის */
+    border: 2px solid var(--pitch-lines);
+    border-radius: 50%;
+    pointer-events: none; /* რომ დაჭერა არ შეაფერხოს */
+    z-index: 1;
+}
+
+.player-slot {
+    width: 90px; /* ოდნავ გავზარდოთ სიგანე */
+    height: 110px;
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    /* დაამატე ეს, რომ ტექსტი არ აიჭრას */
+    z-index: 2; 
+}
+        .player-slot:hover { transform: scale(1.1); }
+
+        /* ცარიელი სლოტის ვიზუალი (ადამიანის სილუეტით) */
+        .slot-empty {
+            width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        /* SVG სილუეტი */
+        .slot-empty svg { width: 30px; height: 30px; fill: currentColor; }
+
+        .slot-pos-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 0.9rem;
+            color: #ccc;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 8px; border-radius: 4px;
+        }
+
+        /* --- მოთამაშეების განლაგება (4-3-3 სქემა) --- */
+        /* კოორდინატები %-ებში სტადიონის მიმართ */
+
+       /* --- მოთამაშეების განლაგება (ზუსტი 4-3-3) --- */
+
+/* მეკარე - ცენტრში */
+.gk { bottom: 5%; left: 50%; transform: translateX(-50%); }
+
+/* მცველები - ერთ ჰორიზონტალურ ხაზზე (bottom: 22%) */
+.def-1 { bottom: 22%; left: 10%; } /* მარცხენა მცველი */
+.def-2 { bottom: 18%; left: 30%; } /* ცენტრალური მცველი 1 */
+.def-3 { bottom: 18%; left: 60%; } /* ცენტრალური მცველი 2 */
+.def-4 { bottom: 22%; left: 81%; } /* მარჯვენა მცველი */
+
+/* ნახევარმცველები - სამკუთხედისებური ან სწორი ხაზი (bottom: 48%) */
+.mid-1 { bottom: 48%; left: 21%; } /* მარცხენა ნახევარმცველი */
+.mid-2 { bottom: 40%; left: 49%; transform: translateX(-50%); } /* ცენტრალური (შუა კაცი) */
+.mid-3 { bottom: 48%; left: 70%; } /* მარჯვენა ნახევარმცველი */
+
+/* თავდამსხმელები - ზედა ხაზი (bottom: 78%) */
+.fwd-1 { bottom: 70%; left: 10%; } /* მარცხენა ფლანგი */
+.fwd-2 { bottom: 75%; left: 49%; transform: translateX(-50%); } /* ცენტრალური თავდამსხმელი */
+.fwd-3 { bottom: 72%; left: 81%; } /* მარჯვენა ფლანგი */
+
+
+        /* --- მოდალური ფანჯარა (Player Picker) --- */
+        .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); /* ოდნავ მუქი ფონი უკეთესი კონტრასტისთვის */
+    z-index: 2000;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+}
+        .modal-content {
+    background: #1a1a1a; /* მუქი ნაცრისფერი, როგორც Image 7-ზე */
+    width: 90%;
+    max-width: 550px; /* დავაბრუნოთ ნორმალური სიგანე */
+    max-height: 85vh;
+    border-radius: 28px; /* უფრო მომრგვალებული კიდეები */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* ძალიან ნაზი ჩარჩო */
+    padding: 30px;
+    position: relative;
+    overflow-x: hidden !important; 
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* გაყიდვის (X) ღილაკი */
+/* თავიდან დამალულია */
+.remove-player-btn {
+    display: none; 
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #1a1a1a;
+    z-index: 10;
+}
+
+/* როცა Sidebar-ს ან სტადიონს მივანიჭებთ კლასს .edit-mode, მაშინ გამოჩნდეს */
+.edit-mode .remove-player-btn {
+    display: flex;
+}
+
+.remove-player-btn:hover {
+    transform: scale(1.2);
+    background: #ff6b81;
+}
+
+#modalTitlePosition {
+    font-family: 'Inter', sans-serif; /* სათაურისთვის 'Inter' უკეთესია */
+    color: white; /* თეთრი ტექსტი, როგორც Image 7-ზე */
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap; /* არ დაუშვას ტექსტის ორ ხაზზე გადასვლა */
+    overflow: hidden;
+    text-overflow: ellipsis; /* თუ სახელი ძალიან გრძელია, ბოლოში ... დაუწეროს */
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
+}
+
+.modal-header, .stats-container, #player-stats-list {
+    width: 100%;
+}
+        .modal-header { font-family: 'Orbitron', sans-serif; color: var(--zeniti-green); margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .close-modal { cursor: pointer; color: #888; font-size: 1.5rem; }
+
+        /* მოთამაშის რედაქტირებული სია მოდალში (შენი წინა დიზაინის მსგავსი, ოღონდ უფრო კომპაქტური) */
+        .modal-player-row {
+            background: var(--glass-bg); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 10px 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .modal-player-row:hover { border-color: var(--zeniti-green); background: rgba(46, 204, 113, 0.05); }
+        .p-pick-price { font-family: 'Orbitron', sans-serif; color: var(--zeniti-green); font-weight: bold; }
+        .content-area {
+    flex: 1;
+    margin-left: 250px; /* ზუსტად Sidebar-ის სიგანე */
+    padding: 40px;
+    display: flex;
+    justify-content: center; /* სტადიონს გაასწორებს დარჩენილი სივრცის ცენტრში */
+    align-items: center;
+    min-height: calc(100vh - 70px);
+}
+.main-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 80px; /* ოდნავ გავზარდოთ სიმაღლე */
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(20px) saturate(180%); /* უფრო ძლიერი შუშის ეფექტი */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 50px;
+    border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+    z-index: 1100; /* Sidebar-ზე მაღლა რომ იყოს */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+#final-team-form {
+    margin-top: 20px !important; /* 'auto'-ს ნაცვლად მივეცით კონკრეტული დაშორება ზემოდან */
+    width: 100%;
+}
+
+.sidebar-stats {
+    width: 250px;
+    background: rgba(15, 15, 15, 0.95); /* ოდნავ უფრო მუქი ფონი */
+    backdrop-filter: blur(15px);
+    padding: 30px 20px;
+    border-right: 1px solid rgba(46, 204, 113, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+
+    /* შეცვალე ეს ნაწილი */
+    position: fixed;   /* sticky-ს ნაცვლად გამოიყენე fixed */
+    top: 70px;
+    left: 0;           /* მიაკარი მარცხენა კედელს */
+    bottom: 0;
+    height: calc(100vh - 70px);
+    z-index: 999;
+}
+
+/* ლოგოს სტილი */
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #fff, var(--zeniti-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ნავიგაციის ბმულები */
+.nav-link {
+    color: #eee;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--zeniti-green);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 15px;
+    right: 15px;
+    height: 3px;
+    background: var(--zeniti-green);
+    border-radius: 10px;
+    box-shadow: 0 0 10px var(--zeniti-green);
+}
+
+.user-badge {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #ccc;
+}
+
+.user-badge i {
+    color: var(--zeniti-green);
+}
+
+/* თავად ღილაკის ვიზუალი */
+.btn-save-sidebar {
+    width: 100%;
+    padding: 15px;
+    background: var(--zeniti-green);
+    color: black;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
+}
+
+.btn-save-sidebar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-save-sidebar:disabled {
+    background: #333;
+    color: #636262;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.main-wrapper {
+    display: flex;
+    width: 100%;
+    margin-top: 80px; /* ჰედერის ახალი სიმაღლე */
+    min-height: calc(100vh - 80px);
+}
+
+.team-title-container h1 {
+    margin: 0;
+    filter: drop-shadow(0 0 10px rgba(46, 204, 113, 0.3));
+}
+
+.team-title-container {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    z-index: 10;
+}
+    </style>
+</head>
+<body>
+
+<!-- 1. ჰედერი -->
+<header class="main-header">
+    <div class="logo">
+        ZENITI <span style="color:white; -webkit-text-fill-color: white;">LEAGUE</span>
+    </div>
+    <nav style="display:flex; gap:15px;">
+        <a href="{{ url_for('home') }}" class="nav-link">მთავარი</a>
+        <a href="{{ url_for('leaderboard') }}" class="nav-link">ცხრილი</a>
+        <a href="{{ url_for('pick_team') }}" class="nav-link active">ჩემი გუნდი</a>
+    </nav>
+
+
+    
+    <div class="user-badge">
+        <span style="width: 8px; height: 8px; background: var(--zeniti-green); border-radius: 50%; display: inline-block;"></span>
+        {{ team_name }} 
+    </div>
+</header>
+
+<div class="main-wrapper">
+    <!-- 2. გვერდითა პანელი (Sidebar) -->
+    <aside class="sidebar-stats">
+        <!-- ჯამური ქულის ბლოკი (წითელი ზონა) -->
+        <div class="stat-box" style="margin-bottom: 20px; border: 2px solid #ff4757; background: rgba(255, 71, 87, 0.05);">
+            <div class="stat-label" style="color: #ff4757;">ჯამური ქულა</div>
+            <div class="stat-value" id="total-pts-val" style="color: #fff; font-size: 2.2rem;">{{ total_points }}</div>
+        </div>
+
+        <div class="stat-group">
+            <div class="stat-box">
+                <div class="stat-label">ბიუჯეტი</div>
+                <div class="stat-value" id="budget-val">{{ budget }}M</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">შემადგენლობა</div>
+                <div class="stat-value" id="count-val">0/11</div>
+            </div>
+        </div>
+
+        <!-- შენახვის ფორმა -->
+        <form id="final-team-form" action="{{ url_for('pick_team') }}" method="POST" style="margin-top: auto;">
+            <div id="hidden-inputs"></div>
+            <div class="info-text" id="status-text" style="font-size: 0.7rem; color: #666; margin-bottom: 10px; text-align: center;">
+                აირჩიეთ 11 მოთამაშე
+            </div>
+            <button type="button" id="transfer-btn" class="btn-save-sidebar" style="background: #3498db; margin-bottom: 10px;" onclick="toggleTransferMode()">
+                ტრანსფერები
+            </button>
+            <button type="submit" class="btn-save-sidebar" id="save-btn" disabled>
+                გუნდის შენახვა
+            </button>
+        </form>
+    </aside>
+
+    <!-- 3. სტადიონის არეა -->
+    <main class="content-area">
+        <!-- გუნდის სახელის ბლოკი (მწვანე ზონა) -->
+        <div style="text-align: center; margin-bottom: 25px;">
+            <h1 style="color: #00ff87; font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; text-transform: uppercase; letter-spacing: 2px; margin: 0;">
+                {{ team_name }}
+            </h1>
+            <div style="color: #555; font-size: 0.8rem; text-transform: uppercase;">სასტარტო შემადგენლობა</div>
+        </div>
+
+        
+
+        <div class="pitch">
+            <!-- მეკარე -->
+            <div class="player-slot gk" onclick="handleSlotClick('მეკარე', this)">
+                <div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                <div class="slot-pos-label">GK</div>
+            </div>
+
+            <!-- მცველები -->
+            <div class="player-slot def-1" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-2" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-3" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-4" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+
+            <!-- ნახევარმცველები -->
+            <div class="player-slot mid-1" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+            <div class="player-slot mid-2" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+            <div class="player-slot mid-3" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+
+            <!-- თავდამსხმელები -->
+            <div class="player-slot fwd-1" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+            <div class="player-slot fwd-2" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+            <div class="player-slot fwd-3" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+        </div>
+    </main>
+</div>
+
+<!-- მოდალური ფანჯარა -->
+<div class="modal" id="playerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modalTitlePosition" style="font-size: 1rem;">მოთამაშის არჩევა</span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div id="modalPlayerList"></div>
+    </div>
+</div>
+
+<script>
+    // 1. მონაცემების მომზადება
+    const savedPlayerIds = {{ saved_players | tojson | safe }} || []; 
+    const allPlayers = JSON.parse('{{ players_json | safe }}' || '[]');
+    // საწყისი ბიუჯეტი Python-იდან
+    let initialBudgetFromDB = parseFloat("{{ budget }}") || 100.0;
+    let currentBudget = initialBudgetFromDB;
+    let selectedPlayers = []; 
+    let activeSlot = null; 
+    let isTransferMode = false;
+
+    const modal = document.getElementById('playerModal');
+
+    // 2. გვერდის ჩატვირთვა და გუნდის აღდგენა
+    window.onload = function() {
+        if (Array.isArray(savedPlayerIds) && savedPlayerIds.length > 0) {
+            // ბიუჯეტის დათვლამდე ვასუფთავებთ, რადგან ქვემოთ თავიდან დააკლდება
+            currentBudget = initialBudgetFromDB;
+            
+            savedPlayerIds.forEach(id => {
+                const playerObj = allPlayers.find(p => p.id == id);
+                if (playerObj) {
+                    const slots = document.querySelectorAll('.player-slot');
+                    for (let slot of slots) {
+                        const slotPosLabel = slot.querySelector('.slot-pos-label').innerText;
+                        const isOccupied = slot.getAttribute('data-player-id');
+
+                        const posMap = { 'GK': 'მეკარე', 'DEF': 'მცველი', 'MID': 'ნახევარმცველი', 'FWD': 'თავდამსხმელი' };
+                        
+                        if (posMap[slotPosLabel] === playerObj.position && !isOccupied) {
+                            renderPlayerInSlot(playerObj, slot);
+                            selectedPlayers.push(playerObj);
+                            currentBudget -= playerObj.price;
+                            break; 
+                        }
+                    }
+                }
+            });
+        }
+        updateUI();
+    };
+
+    // 3. სლოტზე დაჭერის ლოგიკა
+    function handleSlotClick(position, slotElement) {
+        const playerId = slotElement.getAttribute('data-player-id');
+        if (isTransferMode) {
+            openPlayerPicker(position, slotElement);
+        } else if (playerId) {
+            showPlayerStats(playerId);
+        } else {
+            alert("ფეხბურთელის დასამატებლად ჯერ ჩართეთ 'ტრანსფერები' 🔄");
+        }
+    }
+
+    // 4. მოთამაშის არჩევა (მოდალში)
+    function openPlayerPicker(position, slotElement) {
+        activeSlot = slotElement; 
+        modal.style.display = 'flex';
+        document.getElementById('modalTitlePosition').innerText = position + "-ს არჩევა";
+        
+        const listContainer = document.getElementById('modalPlayerList');
+        listContainer.innerHTML = ''; 
+
+        const filteredPlayers = allPlayers.filter(p => p.position.trim() === position.trim());
+
+        filteredPlayers.forEach(player => {
+            if (selectedPlayers.some(sp => sp.id === player.id)) return;
+
+            const playerRow = document.createElement('div');
+            playerRow.className = 'modal-player-row';
+            playerRow.onclick = () => {
+                if (currentBudget - player.price < 0) {
+                    alert("ბიუჯეტი არ გყოფნით!");
+                    return;
+                }
+                selectPlayerForSlot(player);
+            };
+
+            playerRow.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-weight:600; color: white;">${player.name}</div>
+                    <div style="color:#888; font-size: 0.75rem;">${player.real_team}</div>
+                    <div style="font-size: 0.8rem; color: #00ff87; margin-top: 3px; font-weight: bold;">
+                        PTS: ${player.total_points || 0} | ⚽ ${player.goal || 0} | 🅰️ ${player.assist || 0}
+                    </div>
+                </div>
+                <div class="p-pick-price" style="color: #00ff00; font-weight: bold;">${player.price}M</div>
+            `;
+            listContainer.appendChild(playerRow);
+        });
+    }
+
+    function selectPlayerForSlot(player) {
+        if (!activeSlot) return;
+        const oldId = activeSlot.getAttribute('data-player-id');
+        if (oldId) {
+            const oldP = selectedPlayers.find(x => x.id == oldId);
+            if (oldP) {
+                currentBudget += oldP.price;
+                selectedPlayers = selectedPlayers.filter(x => x.id != oldId);
+            }
+        }
+        currentBudget -= player.price;
+        selectedPlayers.push(player);
+        renderPlayerInSlot(player, activeSlot);
+        updateUI();
+        closeModal();
+    }
+
+    // 5. სტატისტიკის ჩვენება (PTS-ის დამატებით)
+    function showPlayerStats(playerId) {
+        const player = allPlayers.find(p => p.id == playerId);
+        if (!player) return;
+
+        modal.style.display = 'flex';
+        document.getElementById('modalTitlePosition').innerText = player.name + " - სტატისტიკა";
+        const listContainer = document.getElementById('modalPlayerList');
+        const isGK = player.position === 'მეკარე';
+
+        listContainer.innerHTML = `
+            <div class="stats-container" style="padding: 20px; color: white; width: 100%;">
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid #444;">
+                    <div style="color: #00ff87; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; text-align: center;">
+                        ${player.total_points || 0} ქულა
+                    </div>
+                    <div style="color: #aaa; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 0.8rem;">
+                        ${player.real_team} | ${player.position}
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: #111; padding: 12px 5px; border-radius: 10px; text-align:center;">
+                            <span style="font-size: 0.7rem; color: #888; text-transform: uppercase;">${isGK ? 'სეივი' : 'გოლი'}</span>
+                            <div style="font-size: 1.3rem; font-weight: bold; margin-top: 5px;">${isGK ? (player.saves || 0) : (player.goal || 0)}</div>
+                        </div>
+                        <div style="background: #111; padding: 12px 5px; border-radius: 10px; text-align:center;">
+                            <span style="font-size: 0.7rem; color: #888; text-transform: uppercase;">${isGK ? 'მშრალი' : 'პასი'}</span>
+                            <div style="font-size: 1.3rem; font-weight: bold; margin-top: 5px;">${isGK ? (player.clean_sheet || 0) : (player.assist || 0)}</div>
+                        </div>
+                        <div style="background: var(--zeniti-green); padding: 12px 5px; border-radius: 10px; color: black; text-align:center;">
+                            <span style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">ფასი</span>
+                            <div style="font-size: 1.3rem; font-weight: 900; margin-top: 5px;">${player.price}M</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: left; font-size: 0.8rem; border-top: 1px solid #333; padding-top: 15px; display: flex; justify-content: space-around; color: #ccc;">
+                        <p style="margin: 0;">🟨 ყვითელი: <b>${player.yellow_card || 0}</b></p>
+                        <p style="margin: 0;">🟥 წითელი: <b>${player.red_card || 0}</b></p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" style="margin-top: 20px; width: 100%; padding: 15px; border-radius: 12px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer;">დახურვა</button>
+            </div>
+        `;
+    }
+
+    // 6. დამხმარე ფუნქციები (PTS-ის ასახვით ბარათზე)
+    function renderPlayerInSlot(player, slot) {
+        slot.setAttribute('data-player-id', player.id);
+        slot.querySelector('.slot-empty').style.display = 'none';
+        slot.querySelector('.slot-pos-label').style.display = 'none';
+
+        const existingVisual = slot.querySelector('.filled-player-visual');
+        if (existingVisual) existingVisual.remove();
+
+        const playerCardHtml = `
+            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease;">
+                <div class="remove-player-btn" onclick="removePlayer(event, '${player.id}', this)">×</div>
+                <div class="p-shirt-num" style="font-family:'Bebas Neue'; font-size:1.8rem; color:white; background:rgba(46, 204, 113, 0.2); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 5px auto; border: 1px solid var(--zeniti-green);">
+                    ${player.shirt_number || '0'}
+                </div>
+                <div class="p-name" style="font-size:0.75rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white;">
+                    ${player.name.split(' ')[0]} 
+                </div>
+                <div class="p-pts" style="font-size:0.7rem; color:#00ff87; font-weight:900; background: rgba(0,0,0,0.4); border-radius: 4px; padding: 1px 4px; display: inline-block; margin-top: 2px;">
+                    ${player.total_points || 0} PTS
+                </div>
+            </div>
+        `;
+        slot.insertAdjacentHTML('beforeend', playerCardHtml);
+    }
+
+    function removePlayer(event, playerId, btnElement) {
+        event.stopPropagation();
+        const playerIndex = selectedPlayers.findIndex(p => p.id == playerId);
+        if (playerIndex === -1) return;
+
+        currentBudget += selectedPlayers[playerIndex].price;
+        selectedPlayers.splice(playerIndex, 1);
+
+        const slot = btnElement.closest('.player-slot');
+        slot.removeAttribute('data-player-id');
+        const visual = slot.querySelector('.filled-player-visual');
+        if (visual) visual.remove();
+        
+        slot.querySelector('.slot-empty').style.display = 'flex';
+        slot.querySelector('.slot-pos-label').style.display = 'block';
+
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('budget-val').innerText = currentBudget.toFixed(1) + "M";
+        document.getElementById('count-val').innerText = selectedPlayers.length + "/11";
+
+        const hiddenContainer = document.getElementById('hidden-inputs');
+        hiddenContainer.innerHTML = '';
+        selectedPlayers.forEach(p => {
+            hiddenContainer.innerHTML += `<input type="hidden" name="players" value="${p.id}">`;
+        });
+
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.disabled = selectedPlayers.length !== 11;
+        // ღილაკს მხოლოდ ვთიშავთ, არ ვმალავთ, რომ დიზაინი არ აირიოს
+        saveBtn.style.opacity = (selectedPlayers.length === 11) ? '1' : '0.5';
+    }
+
+    function toggleTransferMode() {
+        isTransferMode = !isTransferMode;
+        const field = document.querySelector('.pitch');
+        const btn = document.getElementById('transfer-btn');
+        
+        if (isTransferMode) {
+            field.classList.add('edit-mode');
+            btn.innerText = "დასრულება";
+            btn.style.background = "#e67e22";
+        } else {
+            field.classList.remove('edit-mode');
+            btn.innerText = "ტრანსფერები";
+            btn.style.background = "#3498db";
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        activeSlot = null;
+    }
+</script>
+
+</body>
+</html>

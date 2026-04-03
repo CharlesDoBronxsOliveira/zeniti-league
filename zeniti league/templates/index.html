@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeniti League | </title>
+    <meta name="description" content="ზენითი ლიგა - საუკეთესო საფეხბურთო გამოცდილება. თვალი ადევნეთ ტურნირს.">
+    <meta name="keywords" content="ფეხბურთი, ზენითი ლიგა, ტურნირი, ქობულეთი">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header>
+    <div class="logo">ZENITI <span>LEAGUE</span></div>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('home') }}">მთავარი</a></li>
+            <li><a href="{{ url_for('home') }}#standings">ცხრილი</a></li>
+            <li><a href="{{ url_for('home') }}#matches">თამაშები</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropbtn">გუნდები ▾</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('phoenix') }}">ფენიქსი</a>
+                    <a href="{{ url_for('batumi') }}">ბათუმი</a>
+                    <a href="{{ url_for('centri') }}">ცენტრი</a>
+                    <a href="{{ url_for('ghele') }}">ღელე</a>
+                    <a href="{{ url_for('shakhtiori') }}">შახტიორი</a>
+                    <a href="{{ url_for('leghva') }}">ლეღვა</a>
+                    </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="auth-section">
+        {% if session.get('username') %}
+            <a href="{{ url_for('pick_team') }}" class="my-team-btn">⚽ ჩემი გუნდი</a>
+            <a href="{{ url_for('logout') }}" class="logout-link">გასვლა (<span>{{ session['username'] }}</span>)</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">შესვლა</a>
+            <a href="{{ url_for('register') }}" class="reg-btn">რეგისტრაცია</a>
+        {% endif %}
+        <a href="https://facebook.com/..." target="_blank" class="live-btn">🔴 ლაივი</a>
+    </div>
+</header>
+
+    <!-- HERO სექცია ტაიმერით -->
+    <section class="hero">
+        <div class="hero-content">
+    <h1>ეს არის ზენითი ლიგა!</h1>
+    <p>თვალი ადევნეთ სეზონის ყველაზე ცხელ დაპირისპირებებს</p>
+    
+    <a href="{{ url_for('playoffs') }}" style="text-decoration: none;">
+        <button class="cta-btn">2026 ზამთრის სეზონი</button>
+    </a>
+</div>
+
+        <div id="countdown-container">
+            <h3>შემდეგ თამაშამდე დარჩენილია:</h3>
+            <div id="timer">
+                <span id="days">00</span> დღე :
+                <span id="hours">00</span> სთ :
+                <span id="minutes">00</span> წთ :
+                <span id="seconds">00</span> წმ
+            </div>
+        </div>
+    </section>
+
+    <!-- სატურნირო ცხრილები (A და B ჯგუფი) -->
+    <section id="standings" class="container">
+        <h2>A ჯგუფი</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>გუნდი</th>
+                        <th>თ</th>
+                        <th>ქულა</th>
+                        <th>გტ</th>
+                        <th>გშ</th>
+                        <th>სხ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/batumi.png') }}" class="team-logo" alt="Batumi">
+                            <span>The Last Goal / ბათუმი</span>
+                        </td>
+                        <td>2</td>
+                        <td>6</td>
+                        <td>17</td>
+                        <td>10</td>
+                        <td class="diff positive">+7</td>
+                    </tr>
+                    <tr class="active-row">
+                        <td>2</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/phoenix.png') }}" class="team-logo" alt="Phoenix">
+                            <span>ფენიქსი / Phoenix</span>
+                        </td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>18</td>
+                        <td>15</td>
+                        <td class="diff positive">+3</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/Ghele.png') }}" class="team-logo" alt="Ghele">
+                            <span>ღელე / Ghele</span>
+                        </td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>8</td>
+                        <td>10</td>
+                        <td class="diff negative">-10</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>B ჯგუფი</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>გუნდი</th>
+                        <th>თ</th>
+                        <th>ქულა</th>
+                        <th>გტ</th>
+                        <th>გშ</th>
+                        <th>სხ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/centri.png') }}" class="team-logo" alt="Center">
+                            <span>ცენტრი / Center</span>
+                        </td>
+                        <td>2</td>
+                        <td>6</td>
+                        <td>20</td>
+                        <td>14</td>
+                        <td class="diff positive">+6</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/shakhtiori.png') }}" class="team-logo" alt="Shakhtiori">
+                            <span>შახტიორი / ქობულეთი</span>
+                        </td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>9</td>
+                        <td>9</td>
+                        <td class="diff positive">+0</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="team-info">
+                            <img src="{{ url_for('static', filename='images/leghva.png') }}" class="team-logo" alt="Leghva">
+                            <span>ლეღვა / Leghva</span>
+                        </td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>16</td>
+                        <td>22</td>
+                        <td class="diff negative">-6</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- მომავალი თამაშები -->
+    <section id="matches" class="container">
+        <h2>უკანასკნელი თამაშები</h2>
+        <div class="matches-grid">
+            <div class="match-card">
+                <div class="match-date">20 თებერვალი | 20:00</div>
+                <div class="match-teams">
+                    <div class="team">
+                        <img src="{{ url_for('static', filename='images/phoenix.png') }}" alt="phoenix">
+                        <span>ფენიქსი</span>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team">
+                        <img src="{{ url_for('static', filename='images/centri.png') }}" alt="centri">
+                        <span>ცენტრი</span>
+                    </div>
+                </div>
+                <div class="match-venue">ასფალტ არენა</div>
+            </div>
+            
+            <div class="match-card">
+                <div class="match-date">20 თებერვალი | 21:00</div>
+                <div class="match-teams">
+                    <div class="team">
+                        <img src="{{ url_for('static', filename='images/shakhtiori.png') }}" alt="Center">
+                        <span>შახტიორი</span>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team">
+                        <img src="{{ url_for('static', filename='images/batumi.png') }}" alt="Shakhtiori">
+                        <span>ბათუმი</span>
+                    </div>
+                </div>
+                <div class="match-venue">ასფალტ არენა</div>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <!-- ბომბარდირები (ბოლოში, როგორც გინდოდა) -->
+    <section id="top-scorers" class="container">
+    <h2>ბომბარდირები</h2>
+    <div class="scorer-wrapper"> 
+        <table class="scorer-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ფეხბურთელი</th>
+                        <th>გუნდი</th>
+                        <th>გოლი</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="player-info">
+                            <img src="{{ url_for('static', filename='images/khapava.png') }}" alt="Player" class="player-photo">
+                            <span>ლუკა ხაფავა</span>
+                        </td>
+                        <td>ფენიქსი</td>
+                        <td class="goals-count">15</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td class="player-info">
+                            <img src="{{ url_for('static', filename='images/tazo.png') }}" alt="Player" class="player-photo">
+                            <span>თაზო მჟავანაძე</span>
+                        </td>
+                        <td>ცენტრი</td>
+                        <td class="goals-count">12</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="player-info">
+                            <img src="{{ url_for('static', filename='images/ruso.png') }}" alt="Player" class="player-photo">
+                            <span>რუსლან სანამიან</span>
+                        </td>
+                        <td>შახტიორი</td>
+                        <td class="goals-count">10</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    </table> 
+
+<h2 style="text-align: center; margin-top: 40px; color: white;">🛡️ ფინალისტი გუნდები</h2>
+
+<div class="zn-team-container">
+    
+    <a href="{{ url_for('phoenix') }}" class="zn-card-link">
+        <div class="zn-card">
+            <div class="zn-header" style="background: linear-gradient(135deg, #00d4ff, #0055ff);"></div>
+            <div class="zn-logo-wrap">
+                <img src="{{ url_for('static', filename='images/phoenix.png') }}" class="zn-logo zn-logo-zoom" alt="PHOENIX">
+            </div>
+            <div class="zn-info">
+                <h3 class="zn-name">ფენიქსი</h3>
+                <p class="zn-captain">👤 (კ) ალექსანდრე ქათმაძე</p>
+                <div class="zn-badge bg-win">ბოლო: მ - მ - წ</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('shakhtiori') }}" class="zn-card-link">
+        <div class="zn-card">
+            <div class="zn-header" style="background: linear-gradient(135deg, #ff4b2b, #ff416c);"></div>
+            <div class="zn-logo-wrap">
+                <img src="{{ url_for('static', filename='images/shakhtiori.png') }}"" class="zn-logo" alt="shakhtiori">
+            </div>
+            <div class="zn-info">
+                <h3 class="zn-name">შახტიორი</h3>
+                <p class="zn-captain">👤 (კ) რუსლან სანამიანი</p>
+                <div class="zn-badge bg-loss">ბოლო: წ - მ - მ</div>
+            </div>
+        </div>
+    </a>
+
+</div>
+<footer ...> </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <section class="cta-banner">
+    <div class="cta-content">
+        <h2>გახდი ტურნირის <span class="highlight">მხარდამჭერი</span></h2>
+        <p>შემოგვიერთდით და შეიტანეთ წვლილი რეგიონული ფეხბურთის განვითარებაში</p>
+        <a href="{{ url_for('support') }}" class="cta-button">
+    <span>გაიგე მეტი</span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+    </svg>
+</a>
+    </div>
+</section>
+
+    <footer>
+    <p>© 2026 <strong>Zeniti Inc.</strong> | ყველა უფლება დაცულია</p>
+    <p style="font-size: 0.8rem; letter-spacing: 1px;">ZENITI LEAGUE - საუკეთესო საფეხბურთო გამოცდილება</p>
+    
+    <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=61550479801345" style="color: #1877f2;">FACEBOOK</a>
+        <a href="#" style="color: #ff3366;">INSTAGRAM</a>
+    </div>
+</footer>
+</body>
+</html>

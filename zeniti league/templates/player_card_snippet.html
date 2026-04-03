@@ -1,0 +1,124 @@
+<style>
+    /* ბარათის ძირითადი კონტეინერი */
+    .player-card {
+        width: 160px;
+        height: 220px;
+        perspective: 1000px;
+        margin: 10px;
+        display: inline-block;
+    }
+
+    .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        cursor: pointer;
+    }
+
+    .player-card:hover .card-inner {
+        transform: rotateY(180deg);
+    }
+
+    /* წინა და უკანა მხარის საერთო სტილი */
+    .card-front, .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(0, 255, 136, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+    }
+
+    /* წინა მხარე - მწვანე ნეონური სტილი */
+    .card-front {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+    }
+
+    .p-num {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00ff88;
+        opacity: 0.5;
+        position: absolute;
+        top: 10px;
+        right: 15px;
+    }
+
+    .p-info h4 {
+        margin: 5px 0;
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .p-info p {
+        font-size: 0.8rem;
+        color: #bdc3c7;
+        margin: 0;
+    }
+
+    /* უკანა მხარე - სტატისტიკა */
+    .card-back {
+        background: #1a1a1a;
+        color: white;
+        transform: rotateY(180deg);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .stat-item span {
+        font-size: 0.7rem;
+        color: #888;
+        display: block;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #00ff88;
+    }
+</style>
+
+<div class="player-card">
+    <div class="card-inner">
+        <div class="card-front">
+            <div class="p-num">{{ p.shirt_number }}</div>
+            <div class="p-info">
+                <h4>{{ p.name }}</h4>
+                <p>{{ p.position }}</p>
+                <small style="color: #00ff88;">{{ p.real_team }}</small>
+            </div>
+        </div>
+
+        <div class="card-back">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span>ქულა</span>
+                    <div class="stat-value">{{ p.current_points }}</div>
+                </div>
+                <div class="stat-item">
+                    <span>ფასი</span>
+                    <div class="stat-value">{{ p.price }}M</div>
+                </div>
+                <div class="stat-item">
+                    <span>გოლები</span>
+                    <div class="stat-value">{{ p.goals }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
