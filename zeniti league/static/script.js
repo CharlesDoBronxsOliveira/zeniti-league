@@ -1,5 +1,5 @@
 // მიუთითეთ შემდეგი თამაშის თარიღი და დრო
-const nextMatchDate = new Date("July 15, 2026 18:00:00").getTime();
+const nextMatchDate = new Date("July 25, 2026 18:00:00").getTime();
 
 const timerFunction = setInterval(function() {
     const now = new Date().getTime();
