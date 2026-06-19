@@ -11,7 +11,7 @@ app.secret_key = 'zeniti_secret_key_2026'
 # --- მონაცემთა ბაზასთან კავშირი (PostgreSQL) ---
 def get_db_connection():
     # პირველ რიგში ამოწმებს Render-ის გარემოს ცვლადს, თუ არადა იყენებს შენს External URL-ს
-    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqTNLOkev8A...@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
+    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqtNLOkev8AFuY4Q70gv0ogPho4@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
     
     # Render-ის ბაზას სჭირდება sslmode='require' გარე კავშირებისთვის
     if "render.com" in db_url and "sslmode" not in db_url:
@@ -140,7 +140,8 @@ def get_team_players(team_name_in_db):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT * FROM players WHERE real_team = ?", (team_name_in_db,))
+        # PostgreSQL-ისთვის გვჭირდება %s და არა ?
+        cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name_in_db,))
         players_raw = cur.fetchall()
         players_list = []
         for p in players_raw:
