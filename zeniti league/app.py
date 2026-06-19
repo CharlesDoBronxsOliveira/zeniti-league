@@ -1,23 +1,92 @@
+import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import DictCursor
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
-import os
 
 app = Flask(__name__)
 app.secret_key = 'zeniti_secret_key_2026'
 
 # --- მონაცემთა ბაზასთან კავშირი (PostgreSQL) ---
 def get_db_connection():
-    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqtNLOkev8AFuY4Q70gv0ogPho4@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
-    conn = psycopg2.connect(db_url)
+    # პირველ რიგში ამოწმებს Render-ის გარემოს ცვლადს, თუ არადა იყენებს შენს External URL-ს
+    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqTNLOkev8A...@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
+    
+    # Render-ის ბაზას სჭირდება sslmode='require' გარე კავშირებისთვის
+    if "render.com" in db_url and "sslmode" not in db_url:
+        if "?" in db_url:
+            db_url += "&sslmode=require"
+        else:
+            db_url += "?sslmode=require"
+            
+    conn = psycopg2.connect(db_url, cursor_factory=DictCursor)
     return conn
 
-# --- 1. ფენტეზი ქულების დათვლის ლოგიკა ---
+# --- ბაზის ცხრილების ავტომატური შექმნა ---
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # 1. Users ცხრილი
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS "Users" (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(80) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            budget NUMERIC(5,1) DEFAULT 100.0,
+            team_name VARCHAR(100)
+        );
+    ''')
+    
+    # 2. Players ცხრილი
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS players (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            position VARCHAR(50) NOT NULL,
+            price NUMERIC(4,1) NOT NULL,
+            real_team VARCHAR(100) NOT NULL,
+            shirt_number INT,
+            goal INT DEFAULT 0,
+            assist INT DEFAULT 0,
+            saves INT DEFAULT 0,
+            goals_against INT DEFAULT 0,
+            yellow_card INT DEFAULT 0,
+            red_card INT DEFAULT 0,
+            own_goal INT DEFAULT 0,
+            penalty_caused INT DEFAULT 0,
+            penalty_saved INT DEFAULT 0,
+            penalty_won INT DEFAULT 0,
+            outside_box_goals INT DEFAULT 0,
+            own_half_goals INT DEFAULT 0,
+            played_match BOOLEAN DEFAULT FALSE,
+            played_second_half BOOLEAN DEFAULT FALSE,
+            team_won BOOLEAN DEFAULT FALSE,
+            clean_sheet BOOLEAN DEFAULT FALSE,
+            is_captain BOOLEAN DEFAULT FALSE
+        );
+    ''')
+    
+    # 3. User Teams ცხრილი (კავშირი მომხმარებელსა და მოთამაშეებს შორის)
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS user_teams (
+            id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES "Users"(id) ON DELETE CASCADE,
+            player_id INT REFERENCES players(id) ON DELETE CASCADE
+        );
+    ''')
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# გაეშვას ცხრილების შექმნა პროექტის სტარტზე
+init_db()
+
+# --- ფენტეზი ქულების დათვლის ლოგიკა ---
 def calculate_fantasy_points(player):
     points = 0
-    
     pos = str(player.get('position') or '')
     goals = player.get('goal') or 0
     assists = player.get('assist') or 0
@@ -32,66 +101,50 @@ def calculate_fantasy_points(player):
     outside_goals = player.get('outside_box_goals') or 0
     own_half_goals = player.get('own_half_goals') or 0
 
-    # 1. მატჩში მონაწილეობა
     if player.get('played_match'): points += 1
     if player.get('played_second_half'): points += 1
     
-    # 2. გოლები პოზიციების მიხედვით
     if 'მეკარე' in pos: points += goals * 8
     elif 'მცველი' in pos: points += goals * 7
     elif 'ნახევარმცველი' in pos: points += goals * 6
     elif 'თავდამსხმელი' in pos: points += goals * 5
     
-    # 3. ბონუს გოლები
     points += outside_goals * 1
     points += own_half_goals * 3
-    
-    # 4. ასისტი, მოგება, პენალტები
     points += assists * 4
     if player.get('team_won'): points += 3
     points += pen_saved * 6
     points += pen_won * 3
-    
-    # 5. სეივები (ყოველ 4-ზე +1)
     points += (saves // 4)
     
-    # 6. მშრალი კარი (Clean Sheet)
     if player.get('clean_sheet'):
         if 'მეკარე' in pos: points += 8
         elif 'მცველი' in pos: points += 6
         
-    # 7. ჯარიმები (მინუსები)
     points -= yellow * 2
     points -= red * 4
     points -= own_goal * 4
     points -= pen_caused * 3
     
-    # 8. გაშვებული გოლები (მეკარე და მცველი)
     if 'მეკარე' in pos and ga >= 4:
         points -= ((ga - 2) // 2) * 2
-    
     if 'მცველი' in pos and ga >= 3:
         points -= (ga // 3)
 
-    # 9. კაპიტანი (ორმაგი ქულა)
     if player.get('is_captain'):
         points *= 2
         
     return points
 
-# 2. დამხმარე ფუნქცია კონკრეტული გუნდის მოთამაშეების წამოსაღებად
 def get_team_players(team_name_in_db):
     conn = get_db_connection()
+    cur = conn.cursor()
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name_in_db,))
+        cur.execute("SELECT * FROM players WHERE real_team = ?", (team_name_in_db,))
         players_raw = cur.fetchall()
-        
         players_list = []
         for p in players_raw:
             p_dict = dict(p)
-            for field in ['goal', 'assist', 'saves', 'goals_against', 'yellow_card', 'red_card', 'own_goal', 'penalty_caused', 'penalty_saved', 'penalty_won', 'outside_box_goals', 'own_half_goals']:
-                p_dict[field] = p_dict.get(field) or 0
             p_dict['total_points'] = calculate_fantasy_points(p_dict)
             players_list.append(p_dict)
         return players_list
@@ -99,7 +152,7 @@ def get_team_players(team_name_in_db):
         cur.close()
         conn.close()
 
-# --- 2. ავტორიზაცია ---
+# --- ავტორიზაცია ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -107,10 +160,10 @@ def register():
         password = request.form['password']
         hashed_pw = generate_password_hash(password)
         conn = get_db_connection()
+        cur = conn.cursor()
         try:
-            cur = conn.cursor()
             cur.execute('INSERT INTO "Users" (username, password, budget) VALUES (%s, %s, %s)',
-                        (username, hashed_pw, 100.0))
+                         (username, hashed_pw, 100.0))
             conn.commit()
             return redirect(url_for('login'))
         except psycopg2.IntegrityError:
@@ -127,7 +180,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor()
         cur.execute('SELECT * FROM "Users" WHERE username = %s', (username,))
         user = cur.fetchone()
         cur.close()
@@ -145,16 +198,16 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-# --- 3. ფენტეზი გუნდის არჩევა (Pick Team) ---
+# --- ფენტეზი გუნდის არჩევა ---
 @app.route('/pick-team', methods=['GET', 'POST'])
 def pick_team():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     conn = get_db_connection()
+    cur = conn.cursor()
     user_id = session['user_id']
     
-    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
     user_data = cur.fetchone()
     
@@ -167,19 +220,15 @@ def pick_team():
         selected_ids = request.form.getlist('players')
         
         if len(selected_ids) != 11:
-            cur.close()
-            conn.close()
             flash("აირჩიეთ ზუსტად 11 მოთამაშე!")
             return redirect(url_for('pick_team'))
 
-        placeholders = ', '.join(['%s'] * len(selected_ids))
-        cur.execute(f'SELECT SUM(price) as total_cost FROM players WHERE id IN ({placeholders})', selected_ids)
+        selected_ids = [int(i) for i in selected_ids]
+        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
         cost_row = cur.fetchone()
         total_cost = cost_row['total_cost'] or 0
 
         if total_cost > user_data['budget']:
-            cur.close()
-            conn.close()
             flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M")
             return redirect(url_for('pick_team'))
 
@@ -193,7 +242,6 @@ def pick_team():
         flash("გუნდი წარმატებით დაკომპლექტდა!")
         return redirect(url_for('home'))
 
-    # --- GET რეჟიმი ---
     cur.execute('''
         SELECT p.* FROM players p
         JOIN user_teams ut ON p.id = ut.player_id
@@ -207,8 +255,6 @@ def pick_team():
 
     for p in user_team_raw:
         p_dict = dict(p)
-        for field in ['goal', 'assist', 'saves', 'yellow_card', 'red_card']:
-            p_dict[field] = p_dict.get(field) or 0
         p_dict['total_points'] = calculate_fantasy_points(p_dict)
         total_team_points += p_dict['total_points']
         my_team_list.append(p_dict)
@@ -219,9 +265,6 @@ def pick_team():
     players_market = []
     for p in players_raw:
         p_dict = dict(p)
-        for field in ['goal', 'assist', 'saves', 'yellow_card', 'red_card']:
-            p_dict[field] = p_dict.get(field) or 0
-        
         players_market.append({
             'id': p_dict['id'],
             'name': p_dict['name'],
@@ -244,7 +287,7 @@ def pick_team():
                            saved_players=saved_player_ids, 
                            budget=user_data['budget'])
 
-# --- 4. დინამიური გვერდები ---
+# --- როუტები ---
 @app.route('/')
 def home():
     return render_template('index.html', username=session.get('username'))
@@ -257,46 +300,37 @@ def teams():
 def playoffs():
     return render_template('playoffs.html')
 
-# --- 8 გუნდის ინდივიდუალური გვერდები ---
 @app.route('/centri')
 def centri():
-    players = get_team_players('ცენტრი')
-    return render_template('centri.html', players=players)
+    return render_template('centri.html', players=get_team_players('ცენტრი'))
 
 @app.route('/phoenix')
 def phoenix():
-    players = get_team_players('ფენიქსი')
-    return render_template('phoenix.html', players=players)
+    return render_template('phoenix.html', players=get_team_players('ფენიქსი'))
 
 @app.route('/ghele')
 def ghele():
-    players = get_team_players('ღელე')
-    return render_template('ghele.html', players=players)
+    return render_template('ghele.html', players=get_team_players('ღელე'))
 
 @app.route('/leghva')
 def leghva():
-    players = get_team_players('ლეღვა')
-    return render_template('leghva.html', players=players)
-
-@app.route('/la-legends')
-def la_legends():
-    players = get_team_players('La legends')
-    return render_template('la_legends.html', players=players)
+    return render_template('leghva.html', players=get_team_players('ლეღვა'))
 
 @app.route('/tsqavroka')
 def tsqavroka():
-    players = get_team_players('წყავროკა')
-    return render_template('tsqavroka.html', players=players)
+    return render_template('tsqavroka.html', players=get_team_players('წყავროკა'))
+
+@app.route('/la_legends')
+def la_legends():
+    return render_template('la_legends.html', players=get_team_players('La legends'))
 
 @app.route('/jikhanjuri')
 def jikhanjuri():
-    players = get_team_players('ჯიხანჯური')
-    return render_template('jikhanjuri.html', players=players)
+    return render_template('jikhanjuri.html', players=get_team_players('ჯიხანჯური'))
 
 @app.route('/atchqvistavi')
 def atchqvistavi():
-    players = get_team_players('აჭყვისთავი')
-    return render_template('atchqvistavi.html', players=players)
+    return render_template('atchqvistavi.html', players=get_team_players('აჭყვისთავი'))
 
 @app.route('/leaderboard')
 def leaderboard():
