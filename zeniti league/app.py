@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
@@ -7,26 +8,16 @@ import os
 app = Flask(__name__)
 app.secret_key = 'zeniti_secret_key_2026'
 
-# --- მონაცემთა ბაზასთან კავშირი ---
+# --- მონაცემთა ბაზასთან კავშირი (PostgreSQL) ---
 def get_db_connection():
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    # აუცილებლად დაამატე .db ბოლოში
-    db_path = os.path.join(base_dir, 'zeniti_fantasy.db')
-    
-    # შემოწმება: თუ ფაილი არ არსებობს, არ შექმნას ახალი, არამედ გვითხრას
-    if not os.path.exists(db_path):
-        raise FileNotFoundError(f"ბაზის ფაილი ვერ მოიძებნა აქ: {db_path}")
-
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:L7axr98Dc4MNSs3Jr8iB5Y3W7YdeBJHE@dpg-d78577dm5p6s73eii93g-a.oregon-postgres.render.com/zeniti_fantasy_db'
+    conn = psycopg2.connect(db_url)
     return conn
 
 # --- 1. ფენტეზი ქულების დათვლის ლოგიკა ---
-# 1. ფენტეზი ქულების დათვლის ძირითადი ფუნქცია
 def calculate_fantasy_points(player):
     points = 0
     
-    # უსაფრთხოდ ამოვიღოთ მონაცემები: თუ NULL-ია ან აკლია, ავტომატურად გახდეს 0
     pos = str(player.get('position') or '')
     goals = player.get('goal') or 0
     assists = player.get('assist') or 0
@@ -61,7 +52,7 @@ def calculate_fantasy_points(player):
     points += pen_saved * 6
     points += pen_won * 3
     
-    # 5. სეივები (ყოველ 4-ზე +1) - უსაფრთხო გაყოფა
+    # 5. სეივები (ყოველ 4-ზე +1)
     points += (saves // 4)
     
     # 6. მშრალი კარი (Clean Sheet)
@@ -92,20 +83,23 @@ def calculate_fantasy_points(player):
 def get_team_players(team_name_in_db):
     conn = get_db_connection()
     try:
-        players_raw = conn.execute("SELECT * FROM players WHERE real_team = ?", (team_name_in_db,)).fetchall()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name_in_db,))
+        players_raw = cur.fetchall()
+        
         players_list = []
         for p in players_raw:
             p_dict = dict(p)
-            p_dict['goal'] = p_dict.get('goal') or 0
-            p_dict['assist'] = p_dict.get('assist') or 0
-            p_dict['saves'] = p_dict.get('saves') or 0
+            for field in ['goal', 'assist', 'saves', 'goals_against', 'yellow_card', 'red_card', 'own_goal', 'penalty_caused', 'penalty_saved', 'penalty_won', 'outside_box_goals', 'own_half_goals']:
+                p_dict[field] = p_dict.get(field) or 0
             p_dict['total_points'] = calculate_fantasy_points(p_dict)
             players_list.append(p_dict)
-        return players_list # ეს უნდა იყოს აქ
+        return players_list
     finally:
+        cur.close()
         conn.close()
-        
-        # --- 2. ავტორიზაცია ---
+
+# --- 2. ავტორიზაცია ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -114,13 +108,16 @@ def register():
         hashed_pw = generate_password_hash(password)
         conn = get_db_connection()
         try:
-            conn.execute('INSERT INTO Users (username, password, budget) VALUES (?, ?, ?)',
-                         (username, hashed_pw, 100.0))
+            cur = conn.cursor()
+            cur.execute('INSERT INTO "Users" (username, password, budget) VALUES (%s, %s, %s)',
+                        (username, hashed_pw, 100.0))
             conn.commit()
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
+        except psycopg2.IntegrityError:
+            conn.rollback()
             return "ეს სახელი უკვე დაკავებულია!"
         finally:
+            cur.close()
             conn.close()
     return render_template('register.html')
 
@@ -130,7 +127,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM "Users" WHERE username = ?', (username,)).fetchone()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute('SELECT * FROM "Users" WHERE username = %s', (username,))
+        user = cur.fetchone()
+        cur.close()
         conn.close()
         
         if user and check_password_hash(user['password'], password):
@@ -145,8 +145,6 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-import json # დარწმუნდი რომ ეს გაქვს ფაილის თავში
-
 # --- 3. ფენტეზი გუნდის არჩევა (Pick Team) ---
 @app.route('/pick-team', methods=['GET', 'POST'])
 def pick_team():
@@ -156,10 +154,12 @@ def pick_team():
     conn = get_db_connection()
     user_id = session['user_id']
     
-    # წამოვიღოთ ბიუჯეტი და გუნდის სახელი (Users ცხრილიდან)
-    user_data = conn.execute('SELECT budget, team_name FROM "Users" WHERE id = ?', (user_id,)).fetchone()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
+    user_data = cur.fetchone()
     
     if not user_data:
+        cur.close()
         conn.close()
         return "მომხმარებელი ვერ მოიძებნა!"
 
@@ -167,34 +167,39 @@ def pick_team():
         selected_ids = request.form.getlist('players')
         
         if len(selected_ids) != 11:
+            cur.close()
+            conn.close()
             flash("აირჩიეთ ზუსტად 11 მოთამაშე!")
             return redirect(url_for('pick_team'))
 
-        placeholders = ', '.join(['?'] * len(selected_ids))
-        cost_row = conn.execute(f'SELECT SUM(price) as total_cost FROM players WHERE id IN ({placeholders})', selected_ids).fetchone()
+        placeholders = ', '.join(['%s'] * len(selected_ids))
+        cur.execute(f'SELECT SUM(price) as total_cost FROM players WHERE id IN ({placeholders})', selected_ids)
+        cost_row = cur.fetchone()
         total_cost = cost_row['total_cost'] or 0
 
         if total_cost > user_data['budget']:
+            cur.close()
+            conn.close()
             flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M")
             return redirect(url_for('pick_team'))
 
-        conn.execute('DELETE FROM user_teams WHERE user_id = ?', (user_id,))
+        cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
         for p_id in selected_ids:
-            conn.execute('INSERT INTO user_teams (user_id, player_id) VALUES (?, ?)', (user_id, p_id))
+            cur.execute('INSERT INTO user_teams (user_id, player_id) VALUES (%s, %s)', (user_id, p_id))
         
         conn.commit()
+        cur.close()
         conn.close()
         flash("გუნდი წარმატებით დაკომპლექტდა!")
         return redirect(url_for('home'))
 
-    # --- GET რეჟიმი (გვერდის ჩატვირთვა) ---
-
-    # 1. წამოვიღოთ უკვე არჩეული გუნდი სრული სტატისტიკით
-    user_team_raw = conn.execute('''
+    # --- GET რეჟიმი ---
+    cur.execute('''
         SELECT p.* FROM players p
         JOIN user_teams ut ON p.id = ut.player_id
-        WHERE ut.user_id = ?
-    ''', (user_id,)).fetchall()
+        WHERE ut.user_id = %s
+    ''', (user_id,))
+    user_team_raw = cur.fetchall()
 
     my_team_list = []
     total_team_points = 0
@@ -202,19 +207,15 @@ def pick_team():
 
     for p in user_team_raw:
         p_dict = dict(p)
-        # NULL მნიშვნელობების დაზღვევა
         for field in ['goal', 'assist', 'saves', 'yellow_card', 'red_card']:
             p_dict[field] = p_dict.get(field) or 0
-        
-        # ქულების დათვლა (დარწმუნდი რომ calculate_fantasy_points ფუნქცია არსებობს)
         p_dict['total_points'] = calculate_fantasy_points(p_dict)
         total_team_points += p_dict['total_points']
-        
         my_team_list.append(p_dict)
         saved_player_ids.append(p_dict['id'])
 
-    # 2. წამოვიღოთ ყველა მოთამაშე ბაზრისთვის (Market)
-    players_raw = conn.execute('SELECT * FROM players ORDER BY price DESC').fetchall()
+    cur.execute('SELECT * FROM players ORDER BY price DESC')
+    players_raw = cur.fetchall()
     players_market = []
     for p in players_raw:
         p_dict = dict(p)
@@ -232,9 +233,9 @@ def pick_team():
             'total_points': calculate_fantasy_points(p_dict)
         })
     
+    cur.close()
     conn.close()
     
-    # მონაცემების გადაცემა თემფლეითისთვის
     return render_template('pick_team.html', 
                            my_team=my_team_list, 
                            total_points=total_team_points,
@@ -256,6 +257,7 @@ def teams():
 def playoffs():
     return render_template('playoffs.html')
 
+# --- 8 გუნდის ინდივიდუალური გვერდები ---
 @app.route('/centri')
 def centri():
     players = get_team_players('ცენტრი')
@@ -265,11 +267,6 @@ def centri():
 def phoenix():
     players = get_team_players('ფენიქსი')
     return render_template('phoenix.html', players=players)
-
-@app.route('/batumi')
-def batumi():
-    players = get_team_players('ბათუმი')
-    return render_template('batumi.html', players=players)
 
 @app.route('/ghele')
 def ghele():
@@ -281,15 +278,29 @@ def leghva():
     players = get_team_players('ლეღვა')
     return render_template('leghva.html', players=players)
 
-@app.route('/shakhtiori')
-def shakhtiori():
-    players = get_team_players('შახტიორი')
-    return render_template('shakhtiori.html', players=players)
+@app.route('/la-legends')
+def la_legends():
+    players = get_team_players('La legends')
+    return render_template('la_legends.html', players=players)
+
+@app.route('/tsqavroka')
+def tsqavroka():
+    players = get_team_players('წყავროკა')
+    return render_template('tsqavroka.html', players=players)
+
+@app.route('/jikhanjuri')
+def jikhanjuri():
+    players = get_team_players('ჯიხანჯური')
+    return render_template('jikhanjuri.html', players=players)
+
+@app.route('/atchqvistavi')
+def atchqvistavi():
+    players = get_team_players('აჭყვისთავი')
+    return render_template('atchqvistavi.html', players=players)
 
 @app.route('/leaderboard')
 def leaderboard():
-    # აქ შეგიძლია ბაზიდან მონაცემების წამოღებაც დაამატო მოგვიანებით
-    return render_template('index.html') # დარწმუნდი, რომ ასეთი სახელით გაქვს ფაილი templates-ში
+    return render_template('index.html')
 
 @app.route('/support')
 def support():
