@@ -10,7 +10,7 @@ app.secret_key = 'zeniti_secret_key_2026'
 
 # --- მონაცემთა ბაზასთან კავშირი (PostgreSQL) ---
 def get_db_connection():
-    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:L7axr98Dc4MNSs3Jr8iB5Y3W7YdeBJHE@dpg-d78577dm5p6s73eii93g-a.oregon-postgres.render.com/zeniti_fantasy_db'
+    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqtNLOkev8AFuY4Q70gv0ogPho4@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
     conn = psycopg2.connect(db_url)
     return conn
 
