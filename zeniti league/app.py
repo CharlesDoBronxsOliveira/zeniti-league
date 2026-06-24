@@ -23,7 +23,7 @@ def get_db_connection():
     conn = psycopg2.connect(db_url, cursor_factory=DictCursor)
     return conn
 
-# --- ბაზის ცხრილების ავტომატური შექმნა ---
+# --- ბაზის ცხრილების ავტომატური შექმნა და სტრუქტურა ---
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -39,7 +39,7 @@ def init_db():
         );
     ''')
     
-    # 2. Players ცხრილი
+    # 2. Players ცხრილი (აქ played_match და clean_sheet ტიპები შეიცვალა INT-ით)
     cur.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -60,10 +60,10 @@ def init_db():
             penalty_won INT DEFAULT 0,
             outside_box_goals INT DEFAULT 0,
             own_half_goals INT DEFAULT 0,
-            played_match BOOLEAN DEFAULT FALSE,
-            played_second_half BOOLEAN DEFAULT FALSE,
-            team_won BOOLEAN DEFAULT FALSE,
-            clean_sheet BOOLEAN DEFAULT FALSE,
+            played_match INT DEFAULT 0,
+            played_second_half INT DEFAULT 0,
+            team_won INT DEFAULT 0,
+            clean_sheet INT DEFAULT 0,
             is_captain BOOLEAN DEFAULT FALSE
         );
     ''')
@@ -101,31 +101,48 @@ def calculate_fantasy_points(player):
     outside_goals = player.get('outside_box_goals') or 0
     own_half_goals = player.get('own_half_goals') or 0
 
-    if player.get('played_match'): points += 1
-    if player.get('played_second_half'): points += 1
+    # 🔄 მრავალტურა რეჟიმი: რამდენ მატჩსაც ითამაშებს, იმდენჯერ მიიღებს ქულას
+    played_m = player.get('played_match') or 0
+    played_sh = player.get('played_second_half') or 0
+    team_w = player.get('team_won') or 0
+    cs_count = player.get('clean_sheet') or 0
+
+    # უსაფრთხოების დაცვა: თუ ბაზაში ძველი Boolean (True/False) მნიშვნელობები დაგვხვდა, გადავიყვანოთ ციფრში
+    if isinstance(played_m, bool): played_m = 1 if played_m else 0
+    if isinstance(played_sh, bool): played_sh = 1 if played_sh else 0
+    if isinstance(team_w, bool): team_w = 1 if team_w else 0
+    if isinstance(cs_count, bool): cs_count = 1 if cs_count else 0
+
+    points += played_m * 1
+    points += played_sh * 1
+    points += team_w * 3
     
+    # გოლების დათვლა პოზიციების მიხედვით
     if 'მეკარე' in pos: points += goals * 8
     elif 'მცველი' in pos: points += goals * 7
     elif 'ნახევარმცველი' in pos: points += goals * 6
     elif 'თავდამსხმელი' in pos: points += goals * 5
     
+    # ბონუს გოლები, საგოლე პასები და პენალტები
     points += outside_goals * 1
     points += own_half_goals * 3
     points += assists * 4
-    if player.get('team_won'): points += 3
     points += pen_saved * 6
     points += pen_won * 3
     points += (saves // 4)
     
-    if player.get('clean_sheet'):
-        if 'მეკარე' in pos: points += 8
-        elif 'მცველი' in pos: points += 6
+    # 🔄 მშრალი მატჩების დაგროვებითი დათვლა (მხოლოდ დაცვითი პოზიციებისთვის)
+    if cs_count > 0:
+        if 'მეკარე' in pos: points += cs_count * 8
+        elif 'მცველი' in pos: points += cs_count * 6
         
+    # მინუს ქულები და ბარათები
     points -= yellow * 2
     points -= red * 4
     points -= own_goal * 4
     points -= pen_caused * 3
     
+    # გაშვებული გოლების მინუსები
     if 'მეკარე' in pos and ga >= 4:
         points -= ((ga - 2) // 2) * 2
     if 'მცველი' in pos and ga >= 3:
@@ -140,7 +157,6 @@ def get_team_players(team_name_in_db):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # PostgreSQL-ისთვის გვჭირდება %s და არა ?
         cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name_in_db,))
         players_raw = cur.fetchall()
         players_list = []
