@@ -239,74 +239,99 @@ def pick_team():
     if 'user_id' not in session:
         flash('გუნდის ასაწყობად ჯერ უნდა შეხვიდეთ სისტემაში!', 'error')
         return redirect(url_for('login'))
-        
-    user_id = session['user_id']
+
     conn = get_db_connection()
     cur = conn.cursor()
+    user_id = session['user_id']
     
-    if request.method == 'POST':
-        try:
-            data = request.get_json() or {}
-            player_ids = data.get('player_ids', [])
-            captain_id = data.get('captain_id')
-            
-            if len(player_ids) != 5:
-                return jsonify({'success': False, 'message': 'გუნდი უნდა შედგებოდეს ზუსტად 5 მოთამაშისგან!'})
-            if captain_id not in player_ids:
-                return jsonify({'success': False, 'message': 'კაპიტანი უნდა იყოს თქვენი გუნდის წევრი!'})
-                
-            cur.execute("SELECT name, real_team FROM players WHERE id = ANY(%s)", (player_ids,))
-            selected_raw = cur.fetchall()
-            
-            team_counts = {}
-            for p in selected_raw:
-                t = p['real_team']
-                team_counts[t] = team_counts.get(t, 0) + 1
-                if team_counts[t] > 2:
-                    return jsonify({'success': False, 'message': f'ერთი რეალური გუნდიდან ({t}) შეგიძლიათ მაქსიმუმ 2 მოთამაშის აყვანა!'})
-            
-            cur.execute("DELETE FROM user_teams WHERE user_id = %s", (user_id,))
-            for p_id in player_ids:
-                is_cap = (p_id == captain_id)
-                cur.execute(
-                    "INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)",
-                    (user_id, p_id, is_cap)
-                )
-            conn.commit()
-            return jsonify({'success': True, 'message': 'გუნდი წარმატებით შეინახა!'})
-        except Exception as e:
-            conn.rollback()
-            return jsonify({'success': False, 'message': f'შეცდომა შენახვისას: {str(e)}'})
-        finally:
-            cur.close()
-            conn.close()
+    # მომხმარებლის ბიუჯეტისა და გუნდის სახელის წამოღება "Users" ცხრილიდან
+    cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
+    user_data = cur.fetchone()
+    
+    if not user_data:
+        cur.close()
+        conn.close()
+        return "მომხმარებელი ვერ მოიძებნა!"
 
-    # GET მოთხოვნა: ვტვირთავთ ყველა მოთამაშეს საიტზე გამოსაჩენად
-    cur.execute("SELECT * FROM players ORDER BY position, name")
-    all_players_raw = cur.fetchall()
-    
-    all_players = []
-    for p in all_players_raw:
+    # POST მოთხოვნა: როცა მომხმარებელი გუნდს ინახავს HTML ფორმიდან
+    if request.method == 'POST':
+        selected_ids = request.form.getlist('players')
+        
+        if len(selected_ids) != 11:
+            flash("აირჩიეთ ზუსტად 11 მოთამაშე!", "error")
+            return redirect(url_for('pick_team'))
+
+        selected_ids = [int(i) for i in selected_ids]
+        
+        # ბიუჯეტის გადამოწმება ბაზაში
+        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
+        cost_row = cur.fetchone()
+        total_cost = cost_row['total_cost'] or 0
+
+        if float(total_cost) > float(user_data['budget']):
+            flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M", "error")
+            return redirect(url_for('pick_team'))
+
+        # წინა გუნდის წაშლა და ახლის შენახვა (is_captain ამოღებულია)
+        cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
+        for p_id in selected_ids:
+            cur.execute('INSERT INTO user_teams (user_id, player_id) VALUES (%s, %s)', (user_id, p_id))
+        
+        conn.commit()
+        flash("გუნდი წარმატებით დაკომპლექტდა!", "success")
+        return redirect(url_for('pick_team'))
+
+    # GET მოთხოვნა: მონაცემების წამოღება HTML-ისთვის
+    cur.execute('''
+        SELECT p.* FROM players p
+        JOIN user_teams ut ON p.id = ut.player_id
+        WHERE ut.user_id = %s
+    ''', (user_id,))
+    user_team_raw = cur.fetchall()
+
+    my_team_list = []
+    total_team_points = 0
+    saved_player_ids = []
+
+    for p in user_team_raw:
         p_dict = dict(p)
         p_dict['total_points'] = calculate_fantasy_points(p_dict)
-        all_players.append(p_dict)
-        
-    # ვამოწმებთ, ჰყავს თუ არა მომხმარებელს უკვე აწყობილი გუნდი
-    cur.execute("SELECT player_id, is_captain FROM user_teams WHERE user_id = %s", (user_id,))
-    my_team_rows = cur.fetchall()
-    
-    my_team_ids = [r['player_id'] for r in my_team_rows]
-    captain_id = next((r['player_id'] for r in my_team_rows if r['is_captain']), None)
+        total_team_points += p_dict['total_points']
+        my_team_list.append(p_dict)
+        saved_player_ids.append(p_dict['id'])
+
+    # მოგვაქვს ყველა მოთამაშე მოდალური ფანჯრისთვის (JavaScript-ისთვის JSON-ად)
+    cur.execute('SELECT * FROM players ORDER BY price DESC')
+    players_raw = cur.fetchall()
+    players_market = []
+    for p in players_raw:
+        p_dict = dict(p)
+        players_market.append({
+            'id': p_dict['id'],
+            'name': p_dict['name'],
+            'position': p_dict['position'],
+            'price': float(p_dict['price'] or 0), 
+            'real_team': p_dict['real_team'],
+            'goal': p_dict['goal'],
+            'assist': p_dict['assist'],
+            'clean_sheet': p_dict.get('clean_sheet', 0) or p_dict.get('clean_sheet_count', 0),
+            'saves': p_dict['saves'],
+            'yellow_card': p_dict['yellow_card'],
+            'red_card': p_dict['red_card'],
+            'total_points': calculate_fantasy_points(p_dict)
+        })
     
     cur.close()
     conn.close()
     
-    return render_template(
-        'pick_team.html',
-        all_players=all_players,
-        my_team_ids=my_team_ids,
-        captain_id=captain_id
-    )
+    # ვაგზავნით ზუსტად იმ ცვლადებს, რასაც შენი pick_team.html ელოდება
+    return render_template('pick_team.html', 
+                           my_team=my_team_list, 
+                           total_points=total_team_points,
+                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
+                           players_json=json.dumps(players_market), 
+                           saved_players=saved_player_ids, 
+                           budget=user_data['budget'])
 
 # ==========================================
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
@@ -317,7 +342,6 @@ def leaderboard():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # users-ის ნაცვლად ვწერთ "Users"-ს
     cur.execute('SELECT id, username FROM "Users"')
     all_users = cur.fetchall()
     
@@ -325,7 +349,8 @@ def leaderboard():
     all_players_raw = cur.fetchall()
     players_pool = {p['id']: dict(p) for p in all_players_raw}
     
-    cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
+    # ამოღებულია is_captain, მოგვაქვს მხოლოდ user_id და player_id
+    cur.execute("SELECT user_id, player_id FROM user_teams")
     all_selections = cur.fetchall()
     
     cur.close()
@@ -336,10 +361,7 @@ def leaderboard():
         uid = sel['user_id']
         if uid not in user_teams_map:
             user_teams_map[uid] = []
-        user_teams_map[uid].append({
-            'player_id': sel['player_id'],
-            'is_captain': sel['is_captain']
-        })
+        user_teams_map[uid].append(sel['player_id'])
         
     leaderboard_data = []
     for u in all_users:
@@ -349,13 +371,9 @@ def leaderboard():
         u_team = user_teams_map.get(uid, [])
         total_score = 0
         
-        for item in u_team:
-            pid = item['player_id']
-            is_cap = item['is_captain']
-            
+        for pid in u_team:
             if pid in players_pool:
                 player_data = dict(players_pool[pid])
-                player_data['is_captain'] = is_cap
                 total_score += calculate_fantasy_points(player_data)
                 
         leaderboard_data.append({
