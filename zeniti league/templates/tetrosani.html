@@ -424,7 +424,7 @@ footer strong {
 </head>
 <body>
 
-<a href="{{ url_for('home') }}" class="glass-back-button">🏠 მთავარი</a></div>
+<a href="{{ url_for('home') }}" class="glass-back-button">🏠 მთავარი</a>
 
 <header class="team-header">
     <div class="header-content">
@@ -450,8 +450,8 @@ footer strong {
                     </div>
                     <div class="card-back">
                         <div class="stats-grid">
-                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goals }}</div></div>
-                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assists }}</div></div>
+                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
+                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
                             <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
@@ -519,8 +519,8 @@ footer strong {
                     </div>
                     <div class="card-back">
                         <div class="stats-grid">
-                            <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
-                            <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
+                            <div class="stat-item"><span>სეივი</span><div class="stat-value">{{ player.saves or 0 }}</div></div>
+                            <div class="stat-item"><span>გაშვ_გოლი</span><div class="stat-value">{{ player.goals_against or 0 }}</div></div>
                             <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
