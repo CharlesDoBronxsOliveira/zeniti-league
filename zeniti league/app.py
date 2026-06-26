@@ -23,67 +23,6 @@ def get_db_connection():
     conn = psycopg2.connect(db_url, cursor_factory=DictCursor)
     return conn
 
-# --- ბაზის ცხრილების ავტომატური შექმნა და სტრუქტურა ---
-def init_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    # 1. Users ცხრილი
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS "Users" (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(80) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            budget NUMERIC(5,1) DEFAULT 100.0,
-            team_name VARCHAR(100)
-        );
-    ''')
-    
-    # 2. Players ცხრილი (აქ played_match და clean_sheet ტიპები შეიცვალა INT-ით)
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS players (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            position VARCHAR(50) NOT NULL,
-            price NUMERIC(4,1) NOT NULL,
-            real_team VARCHAR(100) NOT NULL,
-            shirt_number INT,
-            goal INT DEFAULT 0,
-            assist INT DEFAULT 0,
-            saves INT DEFAULT 0,
-            goals_against INT DEFAULT 0,
-            yellow_card INT DEFAULT 0,
-            red_card INT DEFAULT 0,
-            own_goal INT DEFAULT 0,
-            penalty_caused INT DEFAULT 0,
-            penalty_saved INT DEFAULT 0,
-            penalty_won INT DEFAULT 0,
-            outside_box_goals INT DEFAULT 0,
-            own_half_goals INT DEFAULT 0,
-            played_match INT DEFAULT 0,
-            played_second_half INT DEFAULT 0,
-            team_won INT DEFAULT 0,
-            clean_sheet INT DEFAULT 0,
-            is_captain BOOLEAN DEFAULT FALSE
-        );
-    ''')
-    
-    # 3. User Teams ცხრილი (კავშირი მომხმარებელსა და მოთამაშეებს შორის)
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS user_teams (
-            id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES "Users"(id) ON DELETE CASCADE,
-            player_id INT REFERENCES players(id) ON DELETE CASCADE
-        );
-    ''')
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# გაეშვას ცხრილების შექმნა პროექტის სტარტზე
-init_db()
-
 # --- ფენტეზი ქულების დათვლის ლოგიკა ---
 def calculate_fantasy_points(player):
     points = 0
@@ -156,158 +95,26 @@ def calculate_fantasy_points(player):
         
     return points
 
-def get_team_players(team_name_in_db):
+# --- დამხმარე ფუნქცია გუნდის მოთამაშეების წამოსაღებად ბაზიდან ---
+def get_team_players(team_name):
     conn = get_db_connection()
     cur = conn.cursor()
-    try:
-        cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name_in_db,))
-        players_raw = cur.fetchall()
-        players_list = []
-        for p in players_raw:
-            p_dict = dict(p)
-            p_dict['total_points'] = calculate_fantasy_points(p_dict)
-            players_list.append(p_dict)
-        return players_list
-    finally:
-        cur.close()
-        conn.close()
-
-# --- ავტორიზაცია ---
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_pw = generate_password_hash(password)
-        conn = get_db_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute('INSERT INTO "Users" (username, password, budget) VALUES (%s, %s, %s)',
-                         (username, hashed_pw, 100.0))
-            conn.commit()
-            return redirect(url_for('login'))
-        except psycopg2.IntegrityError:
-            conn.rollback()
-            return "ეს სახელი უკვე დაკავებულია!"
-        finally:
-            cur.close()
-            conn.close()
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM "Users" WHERE username = %s', (username,))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
-        
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            return redirect(url_for('home'))
-        return "არასწორი მონაცემები!"
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-# --- ფენტეზი გუნდის არჩევა ---
-@app.route('/pick-team', methods=['GET', 'POST'])
-def pick_team():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    user_id = session['user_id']
-    
-    cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
-    user_data = cur.fetchone()
-    
-    if not user_data:
-        cur.close()
-        conn.close()
-        return "მომხმარებელი ვერ მოიძებნა!"
-
-    if request.method == 'POST':
-        selected_ids = request.form.getlist('players')
-        
-        if len(selected_ids) != 11:
-            flash("აირჩიეთ ზუსტად 11 მოთამაშე!")
-            return redirect(url_for('pick_team'))
-
-        selected_ids = [int(i) for i in selected_ids]
-        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
-        cost_row = cur.fetchone()
-        total_cost = cost_row['total_cost'] or 0
-
-        if total_cost > user_data['budget']:
-            flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M")
-            return redirect(url_for('pick_team'))
-
-        cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
-        for p_id in selected_ids:
-            cur.execute('INSERT INTO user_teams (user_id, player_id) VALUES (%s, %s)', (user_id, p_id))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        flash("გუნდი წარმატებით დაკომპლექტდა!")
-        return redirect(url_for('home'))
-
-    cur.execute('''
-        SELECT p.* FROM players p
-        JOIN user_teams ut ON p.id = ut.player_id
-        WHERE ut.user_id = %s
-    ''', (user_id,))
-    user_team_raw = cur.fetchall()
-
-    my_team_list = []
-    total_team_points = 0
-    saved_player_ids = []
-
-    for p in user_team_raw:
-        p_dict = dict(p)
-        p_dict['total_points'] = calculate_fantasy_points(p_dict)
-        total_team_points += p_dict['total_points']
-        my_team_list.append(p_dict)
-        saved_player_ids.append(p_dict['id'])
-
-    cur.execute('SELECT * FROM players ORDER BY price DESC')
-    players_raw = cur.fetchall()
-    players_market = []
-    for p in players_raw:
-        p_dict = dict(p)
-        players_market.append({
-            'id': p_dict['id'],
-            'name': p_dict['name'],
-            'position': p_dict['position'],
-            'price': float(p_dict['price'] or 0), 
-            'real_team': p_dict['real_team'],
-            'goal': p_dict['goal'],
-            'assist': p_dict['assist'],
-            'total_points': calculate_fantasy_points(p_dict)
-        })
-    
+    cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name,))
+    raw_players = cur.fetchall()
     cur.close()
     conn.close()
     
-    return render_template('pick_team.html', 
-                           my_team=my_team_list, 
-                           total_points=total_team_points,
-                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
-                           players_json=json.dumps(players_market), 
-                           saved_players=saved_player_ids, 
-                           budget=user_data['budget'])
+    players = []
+    for p in raw_players:
+        p_dict = dict(p)
+        p_dict['total_points'] = calculate_fantasy_points(p_dict)
+        players.append(p_dict)
+    return players
 
-# --- როუტები ---
+# ==========================================
+# 🏠 ძირითადი მარშრუტები (Routes)
+# ==========================================
+
 @app.route('/')
 def home():
     return render_template('index.html', username=session.get('username'))
@@ -320,9 +127,10 @@ def teams():
 def playoffs():
     return render_template('playoffs.html')
 
-@app.route('/centri')
-def centri():
-    return render_template('centri.html', players=get_team_players('ცენტრი'))
+# 🔄 შეცვლილია: ძველი 'centri' როუტის ნაცვლად ახლა არის თეთროსანი
+@app.route('/tetrosani')
+def tetrosani():
+    return render_template('tetrosani.html', players=get_team_players('თეთროსანი'))
 
 @app.route('/phoenix')
 def phoenix():
@@ -352,13 +160,209 @@ def jikhanjuri():
 def atchqvistavi():
     return render_template('atchqvistavi.html', players=get_team_players('აჭყვისთავი'))
 
-@app.route('/leaderboard')
-def leaderboard():
-    return render_template('index.html')
-
 @app.route('/support')
 def support():
     return render_template('support.html')
 
+# ==========================================
+# 🔐 ავტორიზაციის სისტემა (Auth)
+# ==========================================
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if not username or not password:
+            flash('გთხოვთ შეავსოთ ყველა ველი!', 'error')
+            return redirect(url_for('register'))
+            
+        hashed_password = generate_password_hash(password)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            conn.commit()
+            flash('რეგისტრაცია წარმატებით დასრულდა! შეგიძლიათ შეხვიდეთ.', 'success')
+            return redirect(url_for('login'))
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+            flash('ეს მომხმარებლის სახელი უკვე დაკავებულია!', 'error')
+        finally:
+            cur.close()
+            conn.close()
+            
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            flash(f'მოგესალმებით, {username}!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('არასწორი მომხმარებლის სახელი ან პაროლი!', 'error')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('თქვენ გამოხვედით სისტემიდან.', 'info')
+    return redirect(url_for('home'))
+
+# ==========================================
+# ⚽ ფენტეზი გუნდის აწყობის სისტემა
+# ==========================================
+
+@app.route('/pick-team', methods=['GET', 'POST'])
+def pick_team():
+    if 'user_id' not in session:
+        flash('გუნდის ასაწყობად ჯერ უნდა შეხვიდეთ სისტემაში!', 'error')
+        return redirect(url_for('login'))
+        
+    user_id = session['user_id']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    if request.method == 'POST':
+        try:
+            data = request.get_json() or {}
+            player_ids = data.get('player_ids', [])
+            captain_id = data.get('captain_id')
+            
+            if len(player_ids) != 5:
+                return jsonify({'success': False, 'message': 'გუნდი უნდა შედგებოდეს ზუსტად 5 მოთამაშისგან!'})
+            if captain_id not in player_ids:
+                return jsonify({'success': False, 'message': 'კაპიტანი უნდა იყოს თქვენი გუნდის წევრი!'})
+                
+            cur.execute("SELECT name, real_team FROM players WHERE id = ANY(%s)", (player_ids,))
+            selected_raw = cur.fetchall()
+            
+            team_counts = {}
+            for p in selected_raw:
+                t = p['real_team']
+                team_counts[t] = team_counts.get(t, 0) + 1
+                if team_counts[t] > 2:
+                    return jsonify({'success': False, 'message': f'ერთი რეალური გუნდიდან ({t}) შეგიძლიათ მაქსიმუმ 2 მოთამაშის აყვანა!'})
+            
+            cur.execute("DELETE FROM user_teams WHERE user_id = %s", (user_id,))
+            for p_id in player_ids:
+                is_cap = (p_id == captain_id)
+                cur.execute(
+                    "INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)",
+                    (user_id, p_id, is_cap)
+                )
+            conn.commit()
+            return jsonify({'success': True, 'message': 'გუნდი წარმატებით შეინახა!'})
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'message': f'შეცდომა შენახვისას: {str(e)}'})
+        finally:
+            cur.close()
+            conn.close()
+
+    # GET მოთხოვნა: ვტვირთავთ ყველა მოთამაშეს საიტზე გამოსაჩენად
+    cur.execute("SELECT * FROM players ORDER BY position, name")
+    all_players_raw = cur.fetchall()
+    
+    all_players = []
+    for p in all_players_raw:
+        p_dict = dict(p)
+        p_dict['total_points'] = calculate_fantasy_points(p_dict)
+        all_players.append(p_dict)
+        
+    # ვამოწმებთ, ჰყავს თუ არა მომხმარებელს უკვე აწყობილი გუნდი
+    cur.execute("SELECT player_id, is_captain FROM user_teams WHERE user_id = %s", (user_id,))
+    my_team_rows = cur.fetchall()
+    
+    my_team_ids = [r['player_id'] for r in my_team_rows]
+    captain_id = next((r['player_id'] for r in my_team_rows if r['is_captain']), None)
+    
+    cur.close()
+    conn.close()
+    
+    return render_template(
+        'pick_team.html',
+        all_players=all_players,
+        my_team_ids=my_team_ids,
+        captain_id=captain_id
+    )
+
+# ==========================================
+# 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
+# ==========================================
+
+@app.route('/leaderboard')
+def leaderboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT id, username FROM users")
+    all_users = cur.fetchall()
+    
+    cur.execute("SELECT * FROM players")
+    all_players_raw = cur.fetchall()
+    players_pool = {p['id']: dict(p) for p in all_players_raw}
+    
+    cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
+    all_selections = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    user_teams_map = {}
+    for sel in all_selections:
+        uid = sel['user_id']
+        if uid not in user_teams_map:
+            user_teams_map[uid] = []
+        user_teams_map[uid].append({
+            'player_id': sel['player_id'],
+            'is_captain': sel['is_captain']
+        })
+        
+    leaderboard_data = []
+    for u in all_users:
+        uid = u['id']
+        uname = u['username']
+        
+        u_team = user_teams_map.get(uid, [])
+        total_score = 0
+        
+        for item in u_team:
+            pid = item['player_id']
+            is_cap = item['is_captain']
+            
+            if pid in players_pool:
+                player_data = dict(players_pool[pid])
+                player_data['is_captain'] = is_cap
+                total_score += calculate_fantasy_points(player_data)
+                
+        leaderboard_data.append({
+            'username': uname,
+            'total_points': total_score,
+            'team_size': len(u_team)
+        })
+        
+    leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
+    
+    return render_template('leaderboard.html', leaderboard=leaderboard_data)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Render-ზე პორტი დინამიურად უნდა წაიკითხოს
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
