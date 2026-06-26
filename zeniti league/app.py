@@ -173,6 +173,7 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
+        team_name = request.form.get('team_name', '').strip() # ვიღებთ გუნდის სახელს HTML-დან
         
         if not username or not password:
             flash('გთხოვთ შეავსოთ ყველა ველი!', 'error')
@@ -183,7 +184,9 @@ def register():
         conn = get_db_connection()
         cur = conn.cursor()
         try:
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            # users-ის ნაცვლად ვწერთ "Users"-ს და ვამატებთ team_name-ს
+            cur.execute('INSERT INTO "Users" (username, password, team_name) VALUES (%s, %s, %s)', 
+                        (username, hashed_password, team_name))
             conn.commit()
             flash('რეგისტრაცია წარმატებით დასრულდა! შეგიძლიათ შეხვიდეთ.', 'success')
             return redirect(url_for('login'))
@@ -204,7 +207,9 @@ def login():
         
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+        
+        # users-ის ნაცვლად ვწერთ "Users"-ს
+        cur.execute('SELECT * FROM "Users" WHERE username = %s', (username,))
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -312,7 +317,8 @@ def leaderboard():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT id, username FROM users")
+    # users-ის ნაცვლად ვწერთ "Users"-ს
+    cur.execute('SELECT id, username FROM "Users"')
     all_users = cur.fetchall()
     
     cur.execute("SELECT * FROM players")
