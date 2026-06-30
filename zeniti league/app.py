@@ -1,3 +1,5 @@
+from datetime import datetime
+import pytz
 import os
 import psycopg2
 from psycopg2.extras import DictCursor
@@ -250,9 +252,17 @@ def pick_team():
         return "მომხმარებელი ვერ მოიძებნა!"
 
     if request.method == 'POST':
+        # --- 1. დედლაინის შემოწმება (ტურის დაწყების დრო) ---
+        tz = pytz.timezone('Asia/Tbilisi')
+        now = datetime.now(tz)
+        deadline = tz.localize(datetime(2026, 7, 25, 20, 0, 0))
+        
+        if now >= deadline:
+            flash("ტურნირი უკვე დაწყებულია! ტრანსფერები და კაპიტნის შეცვლა დაბლოკილია.", "error")
+            return redirect(url_for('pick_team'))
+
         selected_ids = request.form.getlist('players')
-        # აქ ვამატებთ captain_id-ს წაკითხვას ფორმიდან!
-        captain_id = request.form.get('captain_id') 
+        captain_id = request.form.get('captain_id')
         
         if len(selected_ids) != 11:
             flash("აირჩიეთ ზუსტად 11 მოთამაშე!", "error")
@@ -265,6 +275,31 @@ def pick_team():
         selected_ids = [int(i) for i in selected_ids]
         captain_id = int(captain_id)
         
+        # --- 2. ლიმიტი: მაქსიმუმ 3 ფეხბურთელი ერთი გუნდიდან ---
+        cur.execute('SELECT real_team FROM players WHERE id = ANY(%s)', (selected_ids,))
+        selected_players_info = cur.fetchall()
+        
+        team_counts = {}
+        for p in selected_players_info:
+            t = p['real_team']
+            team_counts[t] = team_counts.get(t, 0) + 1
+            if team_counts[t] > 3:
+                flash(f"წესი დაირღვა: ერთი გუნდიდან ({t}) შეგიძლიათ მაქსიმუმ 3 მოთამაშის აყვანა!", "error")
+                return redirect(url_for('pick_team'))
+
+        # --- 3. ლიმიტი: მაქსიმუმ 3 ტრანსფერის უფლება ---
+        cur.execute('SELECT player_id FROM user_teams WHERE user_id = %s', (user_id,))
+        current_team_rows = cur.fetchall()
+        current_team_ids = [r['player_id'] for r in current_team_rows]
+        
+        # თუ მომხმარებელს უკვე ჰყავს სრული 11-კაციანი გუნდი შენახული
+        if len(current_team_ids) == 11:
+            new_players_count = len(set(selected_ids) - set(current_team_ids))
+            if new_players_count > 3:
+                flash(f"თქვენ გაქვთ მხოლოდ 3 ტრანსფერის უფლება! თქვენ ცდილობთ {new_players_count} მოთამაშის შეცვლას.", "error")
+                return redirect(url_for('pick_team'))
+
+        # --- ბიუჯეტის შემოწმება ---
         cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
         cost_row = cur.fetchone()
         total_cost = cost_row['total_cost'] or 0
@@ -272,19 +307,18 @@ def pick_team():
         if float(total_cost) > float(user_data['budget']):
             flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M", "error")
             return redirect(url_for('pick_team'))
-
+            
+        # --- გუნდის და კაპიტნის შენახვა ბაზაში ---
         cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
-        
-        # 🟢 აქ ვამატებთ is_captain-ის ჩაწერას ბაზაში!
         for p_id in selected_ids:
-            is_cap = (p_id == captain_id) 
+            is_cap = (p_id == captain_id)
             cur.execute('INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)', (user_id, p_id, is_cap))
         
         conn.commit()
         flash("გუნდი წარმატებით დაკომპლექტდა!", "success")
         return redirect(url_for('pick_team'))
 
-    # 🟢 GET მოთხოვნისას ვკითხულობთ is_captain-ს ბაზიდან!
+    # GET მოთხოვნა - გუნდის ჩატვირთვა გვერდის გახსნისას
     cur.execute('''
         SELECT p.*, ut.is_captain FROM players p
         JOIN user_teams ut ON p.id = ut.player_id
@@ -299,7 +333,6 @@ def pick_team():
 
     for p in user_team_raw:
         p_dict = dict(p)
-        # 🟢 ვინახავთ მიმდინარე კაპიტნის ID-ს!
         if p_dict.get('is_captain'):
             current_captain_id = p_dict['id']
             
@@ -331,7 +364,6 @@ def pick_team():
     cur.close()
     conn.close()
     
-    # 🟢 გადავცემთ captain_id-ს შენს HTML-ს!
     return render_template('pick_team.html', 
                            my_team=my_team_list, 
                            total_points=total_team_points,
@@ -340,14 +372,6 @@ def pick_team():
                            saved_players=saved_player_ids, 
                            budget=user_data['budget'],
                            captain_id=current_captain_id)
-    
-    return render_template('pick_team.html', 
-                           my_team=my_team_list, 
-                           total_points=total_team_points,
-                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
-                           players_json=json.dumps(players_market), 
-                           saved_players=saved_player_ids, 
-                           budget=user_data['budget'])
 
 @app.route('/update-team-name', methods=['POST'])
 def update_team_name():
