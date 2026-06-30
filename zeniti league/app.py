@@ -251,12 +251,19 @@ def pick_team():
 
     if request.method == 'POST':
         selected_ids = request.form.getlist('players')
+        # აქ ვამატებთ captain_id-ს წაკითხვას ფორმიდან!
+        captain_id = request.form.get('captain_id') 
         
         if len(selected_ids) != 11:
             flash("აირჩიეთ ზუსტად 11 მოთამაშე!", "error")
             return redirect(url_for('pick_team'))
+            
+        if not captain_id:
+            flash("გთხოვთ, აირჩიოთ გუნდის კაპიტანი!", "error")
+            return redirect(url_for('pick_team'))
 
         selected_ids = [int(i) for i in selected_ids]
+        captain_id = int(captain_id)
         
         cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
         cost_row = cur.fetchone()
@@ -267,15 +274,19 @@ def pick_team():
             return redirect(url_for('pick_team'))
 
         cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
+        
+        # 🟢 აქ ვამატებთ is_captain-ის ჩაწერას ბაზაში!
         for p_id in selected_ids:
-            cur.execute('INSERT INTO user_teams (user_id, player_id) VALUES (%s, %s)', (user_id, p_id))
+            is_cap = (p_id == captain_id) 
+            cur.execute('INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)', (user_id, p_id, is_cap))
         
         conn.commit()
         flash("გუნდი წარმატებით დაკომპლექტდა!", "success")
         return redirect(url_for('pick_team'))
 
+    # 🟢 GET მოთხოვნისას ვკითხულობთ is_captain-ს ბაზიდან!
     cur.execute('''
-        SELECT p.* FROM players p
+        SELECT p.*, ut.is_captain FROM players p
         JOIN user_teams ut ON p.id = ut.player_id
         WHERE ut.user_id = %s
     ''', (user_id,))
@@ -284,9 +295,14 @@ def pick_team():
     my_team_list = []
     total_team_points = 0
     saved_player_ids = []
+    current_captain_id = None
 
     for p in user_team_raw:
         p_dict = dict(p)
+        # 🟢 ვინახავთ მიმდინარე კაპიტნის ID-ს!
+        if p_dict.get('is_captain'):
+            current_captain_id = p_dict['id']
+            
         p_dict['total_points'] = calculate_fantasy_points(p_dict)
         total_team_points += p_dict['total_points']
         my_team_list.append(p_dict)
@@ -314,6 +330,16 @@ def pick_team():
     
     cur.close()
     conn.close()
+    
+    # 🟢 გადავცემთ captain_id-ს შენს HTML-ს!
+    return render_template('pick_team.html', 
+                           my_team=my_team_list, 
+                           total_points=total_team_points,
+                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
+                           players_json=json.dumps(players_market), 
+                           saved_players=saved_player_ids, 
+                           budget=user_data['budget'],
+                           captain_id=current_captain_id)
     
     return render_template('pick_team.html', 
                            my_team=my_team_list, 
