@@ -300,69 +300,112 @@
         /* ========================================= */
         @media (max-width: 768px) {
             .container {
-                padding: 20px 10px;
+                padding: 10px 5px;
             }
 
             .glass-back-button {
-                position: absolute; /* მობილურზე ზემოდან რომ არ გადაეფაროს */
+                position: absolute;
                 top: 15px; left: 15px;
-                padding: 8px 15px;
+                padding: 8px 12px;
             }
 
             .team-header {
-                margin-top: 80px;
+                margin-top: 60px;
             }
 
             .logo-box {
-                width: 100px;
-                height: 100px;
+                width: 90px;
+                height: 90px;
             }
 
             .team-title {
-                font-size: 2.2rem;
+                font-size: 2rem;
                 letter-spacing: 1px;
             }
 
-            /* ხაზები გადაგვაქვს ვერტიკალურ განლაგებაზე */
-            .pitch-line {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-            }
-
+            /* 🟢 მთავარი ცვლილება: სტადიონის ფონის და Lineup განლაგების დაბრუნება */
             .players-grid {
-                background-image: linear-gradient(rgba(26, 71, 42, 0.9), rgba(22, 61, 36, 0.95)); /* მობილურზე სურათი იცვლება სუფთა ფონით, რომ ბარათები იკითხვებოდეს */
+                background-image: url('https://bitsoc.io/wp-content/uploads/2023/11/football-pitch.png');
+                background-size: cover;
+                background-position: center;
                 padding: 20px 0;
-                gap: 25px;
-                min-height: auto;
+                gap: 15px; /* დაშორება დაცვასა და ნახევარდაცვას შორის */
+                min-height: 550px;
             }
 
+            .pitch-line {
+                flex-direction: row; /* ისევ ჰორიზონტალური განლაგება */
+                flex-wrap: wrap; /* თუ ბევრი მოთამაშეა, ქვემოთ ჩამოიტანს */
+                justify-content: center;
+                gap: 8px; /* დაშორება ბარათებს შორის */
+                width: 100%;
+                padding: 0 5px;
+            }
+
+            /* 🟢 მინი-ბარათების ზომები მობილურისთვის */
             .player-card {
-                height: 110px;
-                width: 90%; /* ბარათი იკავებს ეკრანის სიგანის უმეტესობას */
-                max-width: 320px;
+                height: 120px;
+                width: 31%; /* 3 მოთამაშე იდეალურად ეტევა ერთ ხაზზე */
+                max-width: 115px;
             }
 
+            /* წინა მხარე: ლოგო და ტექსტი ერთმანეთის ქვეშ */
             .card-front {
-                padding: 0 20px;
+                flex-direction: column;
+                justify-content: center;
+                padding: 10px 5px;
+                text-align: center;
             }
 
             .p-num {
-                font-size: 1.6rem;
-                margin-right: 15px;
-                min-width: 40px;
+                font-size: 1.5rem;
+                margin-right: 0;
+                margin-bottom: 5px;
+                min-width: auto;
             }
 
             .p-info h4 {
-                font-size: 1.3rem;
+                font-size: 0.8rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis; /* გრძელ სახელებს ...-ით დაამოკლებს */
+                max-width: 100%;
+                line-height: 1.2;
+            }
+
+            .p-info p {
+                font-size: 0.55rem;
+                margin-top: 3px;
+            }
+
+            /* ამოტრიალებული უკანა მხარე: სტატისტიკა ვერტიკალურად */
+            .card-back {
+                padding: 5px;
+            }
+
+            .stats-grid {
+                flex-direction: column; /* ერთმანეთის ქვეშ დალაგება */
+                gap: 2px;
+            }
+
+            .stat-item {
+                padding: 2px;
+                width: 100%;
+                border: none;
+                border-bottom: 1px solid rgba(255,255,255,0.05); /* ნაზი ხაზი გამოყოფისთვის */
+                border-radius: 0;
+            }
+            .stat-item:last-child {
+                border-bottom: none;
+            }
+
+            .stat-item span {
+                font-size: 0.6rem;
+                margin-bottom: 0;
             }
 
             .stat-value {
-                font-size: 1.8rem;
-            }
-            
-            .stat-item span {
-                font-size: 0.8rem;
+                font-size: 1.1rem;
             }
         }
     </style>
