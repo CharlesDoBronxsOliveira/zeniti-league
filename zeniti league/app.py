@@ -1,455 +1,961 @@
-from datetime import datetime
-import pytz
-import os
-import psycopg2
-from psycopg2.extras import DictCursor
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-import json
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ააწყვე გუნდი - Pitch View - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
 
-app = Flask(__name__)
-app.secret_key = 'zeniti_secret_key_2026'
+:root {
+    --zeniti-green: #2ecc71;
+    --pitch-green: #1a472a; 
+    --pitch-dark: #163d24; /* ოდნავ მუქი ფერი ზოლებისთვის */
+    --pitch-lines: rgba(46, 204, 113, 0.4); /* ხაზები ახლა Zeniti Green-ის ტონალობაშია */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
 
-# --- მონაცემთა ბაზასთან კავშირი (PostgreSQL) ---
-def get_db_connection():
-    # პირველ რიგში ამოწმებს Render-ის გარემოს ცვლადს, თუ არადა იყენებს შენს External URL-ს
-    db_url = os.environ.get('DATABASE_URL') or 'postgresql://zeniti_fantasy_db_user:jzZEzwqtNLOkev8AFuY4Q70gv0ogPho4@dpg-d8qj28e8bjmc738pm37g-a.oregon-postgres.render.com/zeniti_fantasy_db_s49c'
+    /* --- ფონის პარამეტრები --- */
+    /* ვიყენებთ მუქ გრადიენტს ზემოდან, რომ სურათმა ტექსტი არ გადაფაროს */
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), 
+                url('/static/images/stadium.jpg');
     
-    # Render-ის ბაზას სჭირდება sslmode='require' გარე კავშირებისთვის
-    if "render.com" in db_url and "sslmode" not in db_url:
-        if "?" in db_url:
-            db_url += "&sslmode=require"
-        else:
-            db_url += "?sslmode=require"
+    /* სურათი რომ ყოველთვის მთელ ეკრანზე იყოს გაჭიმული */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* ეს ეფექტი ძაან უხდება, სურათი არ მოძრაობს სქროლისას */
+    background-repeat: no-repeat;
+    
+    /* ცენტრში მოსატანად, თუ მთლიანი კონტეინერი Flex-ში გაქვს */
+    overflow-x: hidden;
+    flex-direction: column;
+}
+    
+
+
+        .container {
+    width: 95%;           /* ეკრანის თითქმის მთელი სიგანე */
+    max-width: 1200px;    /* მაქსიმუმ ამდენზე გაიშალოს */
+    margin: 0 auto;
+    
+    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+        .container, .pitch-container {
+    background: rgba(0, 0, 0, 0.3); /* ოდნავ გამჭვირვალე შავი ფონი */
+    backdrop-filter: blur(10px);    /* "შუშის" ეფექტი */
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin-top: 20px;
+}
+
+       /* სტატისტიკის პანელის გასწორება */
+.stats-bar {
+    display: flex; 
+    justify-content: space-around;
+    background: rgba(10, 10, 10, 0.9);
+    backdrop-filter: blur(15px);
+    padding: 15px; 
+    border-radius: 20px;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    width: 100%;           /* გაუსწორდეს სტადიონის სიგანეს */
+    max-width: 1100px;     /* იგივე რაც pitch-ზე */
+    margin-bottom: 20px;
+}
+
+.filled-player-visual {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 5px;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    transition: all 0.3s ease;
+}
+
+.filled-player-visual:hover {
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+    border-color: var(--zeniti-green);
+}
+
+.p-shirt-num {
+    background: var(--zeniti-green) !important; /* ნომერი იყოს მწვანე ფონზე შავი ტექსტით */
+    color: black !important;
+    font-weight: 900;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.stat-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stat-box {
+    text-align: center;
+}
+        .stat-value { 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 1.8rem; 
+    color: var(--zeniti-green); 
+    font-weight: 900; 
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+}
+        .stat-label { 
+    color: #aaa; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    margin-top: 5px;
+}
+
+        /* --- სტადიონის (Pitch) სტილები --- */
+        
+.pitch {
+    background-color: var(--pitch-green);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        var(--pitch-green),
+        var(--pitch-green) 60px,
+        var(--pitch-dark) 60px,
+        var(--pitch-dark) 120px
+    );
+    border: 3px solid var(--zeniti-green);
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.15), 0 20px 50px rgba(0,0,0,0.5);
+    border-radius: 20px;
+    height: 750px; /* ოდნავ გავზარდოთ სიმაღლე უკეთესი პროპორციებისთვის */
+    
+    /* --- შესწორებული ნაწილი --- */
+    width: 100%; 
+    max-width: 950px; /* 1100-ზე Sidebar-თან ერთად შეიძლება ეკრანზე არ დაეტიოს */
+    margin: 0 auto;  /* ცენტრირება content-area-ს შიგნით */
+    /* -------------------------- */
+    
+    position: relative;
+    overflow: hidden;
+}
+
+.content-area {
+    flex: 1;
+    margin-left: 250px; /* Sidebar-ის სიგანე */
+    padding: 20px 40px; /* ზემოდან ნაკლები დაშორება */
+    display: flex;
+    flex-direction: column; /* ელემენტები დალაგდეს ვერტიკალურად */
+    align-items: center; /* ცენტრირება */
+    min-height: calc(100vh - 80px);
+}
+
+.pitch::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px;
+    /* წრე ახლა Zeniti-ს ხაზებით არის */
+    border: 2px solid var(--pitch-lines);
+    border-radius: 50%;
+    pointer-events: none; /* რომ დაჭერა არ შეაფერხოს */
+    z-index: 1;
+}
+
+.player-slot {
+    width: 90px; /* ოდნავ გავზარდოთ სიგანე */
+    height: 110px;
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    /* დაამატე ეს, რომ ტექსტი არ აიჭრას */
+    z-index: 2; 
+}
+        .player-slot:hover { transform: scale(1.1); }
+
+        /* ცარიელი სლოტის ვიზუალი (ადამიანის სილუეტით) */
+        .slot-empty {
+            width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        /* SVG სილუეტი */
+        .slot-empty svg { width: 30px; height: 30px; fill: currentColor; }
+
+        .slot-pos-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 0.9rem;
+            color: #ccc;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 8px; border-radius: 4px;
+        }
+
+        /* --- მოთამაშეების განლაგება (4-3-3 სქემა) --- */
+        /* კოორდინატები %-ებში სტადიონის მიმართ */
+
+       /* --- მოთამაშეების განლაგება (ზუსტი 4-3-3) --- */
+
+/* მეკარე - ცენტრში */
+.gk { bottom: 5%; left: 50%; transform: translateX(-50%); }
+
+/* მცველები - ერთ ჰორიზონტალურ ხაზზე (bottom: 22%) */
+.def-1 { bottom: 22%; left: 10%; } /* მარცხენა მცველი */
+.def-2 { bottom: 18%; left: 30%; } /* ცენტრალური მცველი 1 */
+.def-3 { bottom: 18%; left: 60%; } /* ცენტრალური მცველი 2 */
+.def-4 { bottom: 22%; left: 81%; } /* მარჯვენა მცველი */
+
+/* ნახევარმცველები - სამკუთხედისებური ან სწორი ხაზი (bottom: 48%) */
+.mid-1 { bottom: 48%; left: 21%; } /* მარცხენა ნახევარმცველი */
+.mid-2 { bottom: 40%; left: 49%; transform: translateX(-50%); } /* ცენტრალური (შუა კაცი) */
+.mid-3 { bottom: 48%; left: 70%; } /* მარჯვენა ნახევარმცველი */
+
+/* თავდამსხმელები - ზედა ხაზი (bottom: 78%) */
+.fwd-1 { bottom: 70%; left: 10%; } /* მარცხენა ფლანგი */
+.fwd-2 { bottom: 75%; left: 49%; transform: translateX(-50%); } /* ცენტრალური თავდამსხმელი */
+.fwd-3 { bottom: 72%; left: 81%; } /* მარჯვენა ფლანგი */
+
+
+        /* --- მოდალური ფანჯარა (Player Picker) --- */
+        .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); /* ოდნავ მუქი ფონი უკეთესი კონტრასტისთვის */
+    z-index: 2000;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+}
+        .modal-content {
+    background: #1a1a1a; /* მუქი ნაცრისფერი, როგორც Image 7-ზე */
+    width: 90%;
+    max-width: 550px; /* დავაბრუნოთ ნორმალური სიგანე */
+    max-height: 85vh;
+    border-radius: 28px; /* უფრო მომრგვალებული კიდეები */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* ძალიან ნაზი ჩარჩო */
+    padding: 30px;
+    position: relative;
+    overflow-x: hidden !important; 
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* გაყიდვის (X) ღილაკი */
+/* თავიდან დამალულია */
+.remove-player-btn {
+    display: none; 
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #1a1a1a;
+    z-index: 10;
+}
+
+/* როცა Sidebar-ს ან სტადიონს მივანიჭებთ კლასს .edit-mode, მაშინ გამოჩნდეს */
+.edit-mode .remove-player-btn {
+    display: flex;
+}
+
+.remove-player-btn:hover {
+    transform: scale(1.2);
+    background: #ff6b81;
+}
+
+#modalTitlePosition {
+    font-family: 'Inter', sans-serif; /* სათაურისთვის 'Inter' უკეთესია */
+    color: white; /* თეთრი ტექსტი, როგორც Image 7-ზე */
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap; /* არ დაუშვას ტექსტის ორ ხაზზე გადასვლა */
+    overflow: hidden;
+    text-overflow: ellipsis; /* თუ სახელი ძალიან გრძელია, ბოლოში ... დაუწეროს */
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
+}
+
+.modal-header, .stats-container, #player-stats-list {
+    width: 100%;
+}
+        .modal-header { font-family: 'Orbitron', sans-serif; color: var(--zeniti-green); margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .close-modal { cursor: pointer; color: #888; font-size: 1.5rem; }
+
+        /* მოთამაშის რედაქტირებული სია მოდალში (შენი წინა დიზაინის მსგავსი, ოღონდ უფრო კომპაქტური) */
+        .modal-player-row {
+            background: var(--glass-bg); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 10px 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .modal-player-row:hover { border-color: var(--zeniti-green); background: rgba(46, 204, 113, 0.05); }
+        .p-pick-price { font-family: 'Orbitron', sans-serif; color: var(--zeniti-green); font-weight: bold; }
+        .content-area {
+    flex: 1;
+    margin-left: 250px; /* ზუსტად Sidebar-ის სიგანე */
+    padding: 40px;
+    display: flex;
+    justify-content: center; /* სტადიონს გაასწორებს დარჩენილი სივრცის ცენტრში */
+    align-items: center;
+    min-height: calc(100vh - 70px);
+}
+.main-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 80px; /* ოდნავ გავზარდოთ სიმაღლე */
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(20px) saturate(180%); /* უფრო ძლიერი შუშის ეფექტი */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 50px;
+    border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+    z-index: 1100; /* Sidebar-ზე მაღლა რომ იყოს */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+#final-team-form {
+    margin-top: 20px !important; /* 'auto'-ს ნაცვლად მივეცით კონკრეტული დაშორება ზემოდან */
+    width: 100%;
+}
+
+.sidebar-stats {
+    width: 250px;
+    background: rgba(15, 15, 15, 0.95); /* ოდნავ უფრო მუქი ფონი */
+    backdrop-filter: blur(15px);
+    padding: 30px 20px;
+    border-right: 1px solid rgba(46, 204, 113, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+
+    /* შეცვალე ეს ნაწილი */
+    position: fixed;   /* sticky-ს ნაცვლად გამოიყენე fixed */
+    top: 70px;
+    left: 0;           /* მიაკარი მარცხენა კედელს */
+    bottom: 0;
+    height: calc(100vh - 70px);
+    z-index: 999;
+}
+
+/* ლოგოს სტილი */
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #fff, var(--zeniti-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ნავიგაციის ბმულები */
+.nav-link {
+    color: #eee;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--zeniti-green);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 15px;
+    right: 15px;
+    height: 3px;
+    background: var(--zeniti-green);
+    border-radius: 10px;
+    box-shadow: 0 0 10px var(--zeniti-green);
+}
+
+.user-badge {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #ccc;
+}
+
+.user-badge i {
+    color: var(--zeniti-green);
+}
+
+/* თავად ღილაკის ვიზუალი */
+.btn-save-sidebar {
+    width: 100%;
+    padding: 15px;
+    background: var(--zeniti-green);
+    color: black;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
+}
+
+.btn-save-sidebar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-save-sidebar:disabled {
+    background: #333;
+    color: #636262;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.main-wrapper {
+    display: flex;
+    width: 100%;
+    margin-top: 80px; /* ჰედერის ახალი სიმაღლე */
+    min-height: calc(100vh - 80px);
+}
+
+.team-title-container h1 {
+    margin: 0;
+    filter: drop-shadow(0 0 10px rgba(46, 204, 113, 0.3));
+}
+
+.team-title-container {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    z-index: 10;
+}
+    </style>
+</head>
+<body>
+
+<!-- 1. ჰედერი -->
+<header class="main-header">
+    <div class="logo">
+        ZENITI <span style="color:white; -webkit-text-fill-color: white;">LEAGUE</span>
+    </div>
+    <nav style="display:flex; gap:15px;">
+        <a href="{{ url_for('home') }}" class="nav-link">მთავარი</a>
+        <a href="{{ url_for('leaderboard') }}" class="nav-link">ცხრილი</a>
+        <a href="{{ url_for('pick_team') }}" class="nav-link active">ჩემი გუნდი</a>
+    </nav>
+
+
+    
+    <div class="user-badge">
+        <span style="width: 8px; height: 8px; background: var(--zeniti-green); border-radius: 50%; display: inline-block;"></span>
+        {{ team_name }} 
+    </div>
+</header>
+
+<div class="main-wrapper">
+    <aside class="sidebar-stats">
+        <div class="stat-box" style="margin-bottom: 20px; border: 2px solid #ff4757; background: rgba(255, 71, 87, 0.05);">
+            <div class="stat-label" style="color: #ff4757;">ჯამური ქულა</div>
+            <div class="stat-value" id="total-pts-val" style="color: #fff; font-size: 2.2rem;">{{ total_points }}</div>
+        </div>
+
+        <div class="stat-group">
+            <div class="stat-box">
+                <div class="stat-label">ბიუჯეტი</div>
+                <div class="stat-value" id="budget-val">{{ budget }}M</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">შემადგენლობა</div>
+                <div class="stat-value" id="count-val">0/11</div>
+            </div>
+        </div>
+
+        <form id="final-team-form" action="{{ url_for('pick_team') }}" method="POST" style="margin-top: auto;">
             
-    conn = psycopg2.connect(db_url, cursor_factory=DictCursor)
-    return conn
-
-# --- ფენტეზი ქულების დათვლის ლოგიკა ---
-def calculate_fantasy_points(player):
-    points = 0
-    pos = str(player.get('position') or '')
-    goals = player.get('goal') or 0
-    assists = player.get('assist') or 0
-    saves = player.get('saves') or 0
-    ga = player.get('goals_against') or 0
-    yellow = player.get('yellow_card') or 0
-    red = player.get('red_card') or 0
-    own_goal = player.get('own_goal') or 0
-    pen_caused = player.get('penalty_caused') or 0
-    pen_saved = player.get('penalty_saved') or 0
-    pen_won = player.get('penalty_won') or 0
-    outside_goals = player.get('outside_box_goals') or 0
-    own_half_goals = player.get('own_half_goals') or 0
-
-    # 🔄 ვკითხულობთ ახალი ციფრული სვეტებიდან (თუ ცარიელია, ვიყენებთ ძველ სვეტებს უსაფრთხოებისთვის)
-    played_m = player.get('played_match_count') if player.get('played_match_count') is not None else player.get('played_match')
-    played_sh = player.get('played_second_half_count') if player.get('played_second_half_count') is not None else player.get('played_second_half')
-    team_w = player.get('team_won_count') if player.get('team_won_count') is not None else player.get('team_won')
-    cs_count = player.get('clean_sheet_count') if player.get('clean_sheet_count') is not None else player.get('clean_sheet')
-
-    # ბულიანების ციფრებში გადაყვანა (თუ ძველი ჩანაწერი დაგვხვდა)
-    if isinstance(played_m, bool): played_m = 1 if played_m else 0
-    if isinstance(played_sh, bool): played_sh = 1 if played_sh else 0
-    if isinstance(team_w, bool): team_w = 3 if team_w else 0
-    if isinstance(cs_count, bool): cs_count = 1 if cs_count else 0
-
-    # ქულების დარიცხვა მატჩებზე
-    points += played_m * 1
-    points += played_sh * 1
-    
-    # თუ team_w უკვე ქულაა (ანუ ბულიანიდან გადავიდა), პირდაპირ ვუმატებთ, თუ ახალი ციფრია, ვამრავლებთ 3-ზე
-    if player.get('team_won_count') is not None:
-        points += team_w * 3
-    else:
-        points += team_w
-    
-    # გოლების დათვლა პოზიციების მიხედვით
-    if 'მეკარე' in pos: points += goals * 8
-    elif 'მცველი' in pos: points += goals * 7
-    elif 'ნახევარმცველი' in pos: points += goals * 6
-    elif 'თავდამსხმელი' in pos: points += goals * 5
-    
-    points += outside_goals * 1
-    points += own_half_goals * 3
-    points += assists * 4
-    points += pen_saved * 6
-    points += pen_won * 3
-    points += (saves // 4)
-    
-    # 🔄 მშრალი მატჩების დაგროვებითი დათვლა
-    if cs_count > 0:
-        if 'მეკარე' in pos: points += cs_count * 8
-        elif 'მცველი' in pos: points += cs_count * 6
-        
-    points -= yellow * 2
-    points -= red * 4
-    points -= own_goal * 4
-    points -= pen_caused * 3
-    
-    if 'მეკარე' in pos and ga >= 4:
-        points -= ((ga - 2) // 2) * 2
-    if 'მცველი' in pos and ga >= 3:
-        points -= (ga // 3)
-
-    if player.get('is_captain'):
-        points *= 2
-        
-    return points
-
-# --- დამხმარე ფუნქცია გუნდის მოთამაშეების წამოსაღებად ბაზიდან ---
-def get_team_players(team_name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM players WHERE real_team = %s", (team_name,))
-    raw_players = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    players = []
-    for p in raw_players:
-        p_dict = dict(p)
-        p_dict['total_points'] = calculate_fantasy_points(p_dict)
-        players.append(p_dict)
-    return players
-
-# ==========================================
-# 🏠 ძირითადი მარშრუტები (Routes)
-# ==========================================
-
-@app.route('/')
-def home():
-    return render_template('index.html', username=session.get('username'))
-
-@app.route('/teams')
-def teams():
-    return render_template('teams.html')
-
-@app.route('/playoffs')
-def playoffs():
-    return render_template('playoffs.html')
-
-@app.route('/tetrosani')
-def tetrosani():
-    return render_template('tetrosani.html', players=get_team_players('თეთროსანი'))
-
-@app.route('/phoenix')
-def phoenix():
-    return render_template('phoenix.html', players=get_team_players('ფენიქსი'))
-
-@app.route('/ghele')
-def ghele():
-    return render_template('ghele.html', players=get_team_players('ღელე'))
-
-@app.route('/leghva')
-def leghva():
-    return render_template('leghva.html', players=get_team_players('ლეღვა'))
-
-@app.route('/tsqavroka')
-def tsqavroka():
-    return render_template('tsqavroka.html', players=get_team_players('წყავროკა'))
-
-@app.route('/la_legends')
-def la_legends():
-    return render_template('la_legends.html', players=get_team_players('La legends'))
-
-@app.route('/jikhanjuri')
-def jikhanjuri():
-    return render_template('jikhanjuri.html', players=get_team_players('ჯიხანჯური'))
-
-@app.route('/atchqvistavi')
-def atchqvistavi():
-    return render_template('atchqvistavi.html', players=get_team_players('აჭყვისთავი'))
-
-@app.route('/support')
-def support():
-    return render_template('support.html')
-
-# ==========================================
-# 🔐 ავტორიზაციის სისტემა (Auth)
-# ==========================================
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        team_name = request.form.get('team_name', '').strip() 
-        
-        if not username or not password:
-            flash('გთხოვთ შეავსოთ ყველა ველი!', 'error')
-            return redirect(url_for('register'))
+            <div id="hidden-inputs"></div>
+            <input type="hidden" name="captain_id" id="hidden-captain-id" value="">
             
-        hashed_password = generate_password_hash(password)
-        
-        conn = get_db_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute('INSERT INTO "Users" (username, password, team_name) VALUES (%s, %s, %s)', 
-                        (username, hashed_password, team_name))
-            conn.commit()
-            flash('რეგისტრაცია წარმატებით დასრულდა! შეგიძლიათ შეხვიდეთ.', 'success')
-            return redirect(url_for('login'))
-        except psycopg2.errors.UniqueViolation:
-            conn.rollback()
-            flash('ეს მომხმარებლის სახელი უკვე დაკავებულია!', 'error')
-        finally:
-            cur.close()
-            conn.close()
+            <div class="info-text" id="status-text" style="font-size: 0.7rem; color: #666; margin-bottom: 10px; text-align: center;">
+                აირჩიეთ 11 მოთამაშე
+            </div>
             
-    return render_template('register.html')
+            <button type="button" id="transfer-btn" class="btn-save-sidebar" style="background: #3498db; margin-bottom: 10px;" onclick="toggleTransferMode()">
+                ტრანსფერები
+            </button>
+            <button type="submit" class="btn-save-sidebar" id="save-btn" disabled>
+                გუნდის შენახვა
+            </button>
+        </form>
+    </aside>
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+    <!-- 3. სტადიონის არეა -->
+   <main class="content-area">
         
-        conn = get_db_connection()
-        cur = conn.cursor()
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="width: 100%; max-width: 950px; margin-bottom: 20px;">
+                {% for category, message in messages %}
+                    <div style="padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-bottom: 10px; font-family: 'Inter', sans-serif;
+                        {% if category == 'error' %} background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; 
+                        {% else %} background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div style="text-align: center; margin-bottom: 25px; position: relative;">
+        <h1 style="color: #00ff87; font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; text-transform: uppercase; letter-spacing: 2px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 15px;">
+            {{ team_name }}
+            <button onclick="openNameEditModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px 10px; transition: 0.3s;" title="სახელის შეცვლა" onmouseover="this.style.background='rgba(46, 204, 113, 0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                ✏️
+            </button>
+        </h1>
+        <div style="color: #555; font-size: 0.8rem; text-transform: uppercase; margin-top: 5px;">სასტარტო შემადგენლობა</div>
+    </div>
+
+    <div class="modal" id="nameModal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; height: auto;">
+            <div class="modal-header" style="justify-content: center; position: relative;">
+                <span style="font-size: 1.2rem; color: white; font-family: 'Inter', sans-serif;">გუნდის სახელის შეცვლა</span>
+                <span class="close-modal" onclick="closeNameEditModal()" style="position: absolute; right: 0; top: -5px;">&times;</span>
+            </div>
+            <form action="{{ url_for('update_team_name') }}" method="POST" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                <input type="text" name="new_team_name" placeholder="ახალი სახელი..." value="{{ team_name }}" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(46, 204, 113, 0.5); border-radius: 10px; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none;">
+                <button type="submit" class="btn-save-sidebar">შენახვა</button>
+            </form>
+        </div>
+    </div>
         
-        cur.execute('SELECT * FROM "Users" WHERE username = %s', (username,))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
+
+        <div class="pitch">
+            <!-- მეკარე -->
+            <div class="player-slot gk" onclick="handleSlotClick('მეკარე', this)">
+                <div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                <div class="slot-pos-label">GK</div>
+            </div>
+
+            <!-- მცველები -->
+            <div class="player-slot def-1" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-2" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-3" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+            <div class="player-slot def-4" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
+
+            <!-- ნახევარმცველები -->
+            <div class="player-slot mid-1" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+            <div class="player-slot mid-2" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+            <div class="player-slot mid-3" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
+
+            <!-- თავდამსხმელები -->
+            <div class="player-slot fwd-1" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+            <div class="player-slot fwd-2" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+            <div class="player-slot fwd-3" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
+        </div>
+    </main>
+</div>
+
+<!-- მოდალური ფანჯარა -->
+<div class="modal" id="playerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modalTitlePosition" style="font-size: 1rem;">მოთამაშის არჩევა</span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div id="modalPlayerList"></div>
+    </div>
+</div>
+
+<div class="modal" id="captainModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <span style="font-size: 1.1rem; color: #f1c40f; font-family: 'Inter', sans-serif; font-weight: bold;">👑 აირჩიეთ გუნდის კაპიტანი</span>
+            <span class="close-modal" onclick="closeCaptainModal()">&times;</span>
+        </div>
+        <div id="captainPlayerList" style="display:flex; flex-direction:column; gap:10px; margin-top:15px;"></div>
+    </div>
+</div>
+
+<script>
+    let savedCaptainId = "{{ captain_id or '' }}";
+    let currentCaptainId = savedCaptainId; 
+
+    // 1. მონაცემების მომზადება
+    const savedPlayerIds = {{ saved_players | tojson | safe }} || []; 
+    const allPlayers = JSON.parse('{{ players_json | safe }}' || '[]');
+    let initialBudgetFromDB = parseFloat("{{ budget }}") || 100.0;
+    let currentBudget = initialBudgetFromDB;
+    let selectedPlayers = []; 
+    let activeSlot = null; 
+    let isTransferMode = false;
+
+    const modal = document.getElementById('playerModal');
+    const captainModal = document.getElementById('captainModal');
+
+    // 2. გვერდის ჩატვირთვა და გუნდის აღდგენა
+    window.onload = function() {
+        if (Array.isArray(savedPlayerIds) && savedPlayerIds.length > 0) {
+            currentBudget = initialBudgetFromDB;
+            savedPlayerIds.forEach(id => {
+                const playerObj = allPlayers.find(p => p.id == id);
+                if (playerObj) {
+                    const slots = document.querySelectorAll('.player-slot');
+                    for (let slot of slots) {
+                        const slotPosLabel = slot.querySelector('.slot-pos-label').innerText;
+                        const isOccupied = slot.getAttribute('data-player-id');
+                        const posMap = { 'GK': 'მეკარე', 'DEF': 'მცველი', 'MID': 'ნახევარმცველი', 'FWD': 'თავდამსხმელი' };
+                        
+                        if (posMap[slotPosLabel] === playerObj.position && !isOccupied) {
+                            renderPlayerInSlot(playerObj, slot);
+                            selectedPlayers.push(playerObj);
+                            currentBudget -= playerObj.price;
+                            break; 
+                        }
+                    }
+                }
+            });
+        }
+        updateUI();
+    };
+
+    // 3. სლოტზე დაჭერის ლოგიკა (გასწორებული!)
+    function handleSlotClick(position, slotElement) {
+        const playerId = slotElement.getAttribute('data-player-id');
         
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            flash(f'მოგესალმებით, {username}!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('არასწორი მომხმარებლის სახელი ან პაროლი!', 'error')
+        if (playerId) {
+            // თუ სლოტში უკვე დგას ფეხბურთელი, ყოველთვის იხსნება მისი სტატისტიკა (და კაპიტნის ღილაკი)
+            showPlayerStats(playerId);
+        } else if (isTransferMode) {
+            // თუ ცარიელია და ტრანსფერები ჩართულია, იხსნება მოთამაშეების სია
+            openPlayerPicker(position, slotElement);
+        } else {
+            alert("ფეხბურთელის დასამატებლად ჯერ ჩართეთ 'ტრანსფერები' 🔄");
+        }
+    }
+
+    // 4. მოთამაშის არჩევა (მოდალში)
+    // 4. მოთამაშის არჩევა (მოდალში) - 3 მოთამაშის ლიმიტით
+    function openPlayerPicker(position, slotElement) {
+        activeSlot = slotElement; 
+        modal.style.display = 'flex';
+        document.getElementById('modalTitlePosition').innerText = position + "-ს არჩევა";
+        
+        const listContainer = document.getElementById('modalPlayerList');
+        listContainer.innerHTML = ''; 
+
+        const filteredPlayers = allPlayers.filter(p => p.position.trim() === position.trim());
+
+        filteredPlayers.forEach(player => {
+            if (selectedPlayers.some(sp => sp.id === player.id)) return;
+
+            const playerRow = document.createElement('div');
+            playerRow.className = 'modal-player-row';
             
-    return render_template('login.html')
+            // 🟢 აქ ხდება შემოწმება დაწკაპუნებისას!
+            playerRow.onclick = () => {
+                // შემოწმება 1: ბიუჯეტი
+                if (currentBudget - player.price < 0) {
+                    alert("❌ ბიუჯეტი არ გყოფნით!");
+                    return;
+                }
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('თქვენ გამოხვედით სისტემიდან.', 'info')
-    return redirect(url_for('home'))
-
-# ==========================================
-# ⚽ ფენტეზი გუნდის აწყობის სისტემა
-# ==========================================
-
-@app.route('/pick-team', methods=['GET', 'POST'])
-def pick_team():
-    if 'user_id' not in session:
-        flash('გუნდის ასაწყობად ჯერ უნდა შეხვიდეთ სისტემაში!', 'error')
-        return redirect(url_for('login'))
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    user_id = session['user_id']
-    
-    cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
-    user_data = cur.fetchone()
-    
-    if not user_data:
-        cur.close()
-        conn.close()
-        return "მომხმარებელი ვერ მოიძებნა!"
-
-    if request.method == 'POST':
-        # --- 1. დედლაინის შემოწმება (ტურის დაწყების დრო) ---
-        tz = pytz.timezone('Asia/Tbilisi')
-        now = datetime.now(tz)
-        deadline = tz.localize(datetime(2026, 7, 25, 20, 0, 0))
-        
-        if now >= deadline:
-            flash("ტურნირი უკვე დაწყებულია! ტრანსფერები და კაპიტნის შეცვლა დაბლოკილია.", "error")
-            return redirect(url_for('pick_team'))
-
-        selected_ids = request.form.getlist('players')
-        captain_id = request.form.get('captain_id')
-        
-        if len(selected_ids) != 11:
-            flash("აირჩიეთ ზუსტად 11 მოთამაშე!", "error")
-            return redirect(url_for('pick_team'))
-            
-        if not captain_id:
-            flash("გთხოვთ, აირჩიოთ გუნდის კაპიტანი!", "error")
-            return redirect(url_for('pick_team'))
-
-        selected_ids = [int(i) for i in selected_ids]
-        captain_id = int(captain_id)
-        
-        # --- 2. ლიმიტი: მაქსიმუმ 3 ფეხბურთელი ერთი გუნდიდან ---
-        cur.execute('SELECT real_team FROM players WHERE id = ANY(%s)', (selected_ids,))
-        selected_players_info = cur.fetchall()
-        
-        team_counts = {}
-        for p in selected_players_info:
-            t = p['real_team']
-            team_counts[t] = team_counts.get(t, 0) + 1
-            if team_counts[t] > 3:
-                flash(f"წესი დაირღვა: ერთი გუნდიდან ({t}) შეგიძლიათ მაქსიმუმ 3 მოთამაშის აყვანა!", "error")
-                return redirect(url_for('pick_team'))
-
-        # --- 3. ლიმიტი: მაქსიმუმ 3 ტრანსფერის უფლება ---
-        cur.execute('SELECT player_id FROM user_teams WHERE user_id = %s', (user_id,))
-        current_team_rows = cur.fetchall()
-        current_team_ids = [r['player_id'] for r in current_team_rows]
-        
-        # თუ მომხმარებელს უკვე ჰყავს სრული 11-კაციანი გუნდი შენახული
-        if len(current_team_ids) == 11:
-            new_players_count = len(set(selected_ids) - set(current_team_ids))
-            if new_players_count > 3:
-                flash(f"თქვენ გაქვთ მხოლოდ 3 ტრანსფერის უფლება! თქვენ ცდილობთ {new_players_count} მოთამაშის შეცვლას.", "error")
-                return redirect(url_for('pick_team'))
-
-        # --- ბიუჯეტის შემოწმება ---
-        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
-        cost_row = cur.fetchone()
-        total_cost = cost_row['total_cost'] or 0
-
-        if float(total_cost) > float(user_data['budget']):
-            flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M", "error")
-            return redirect(url_for('pick_team'))
-            
-        # --- გუნდის და კაპიტნის შენახვა ბაზაში ---
-        cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
-        for p_id in selected_ids:
-            is_cap = (p_id == captain_id)
-            cur.execute('INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)', (user_id, p_id, is_cap))
-        
-        conn.commit()
-        flash("გუნდი წარმატებით დაკომპლექტდა!", "success")
-        return redirect(url_for('pick_team'))
-
-    # GET მოთხოვნა - გუნდის ჩატვირთვა გვერდის გახსნისას
-    cur.execute('''
-        SELECT p.*, ut.is_captain FROM players p
-        JOIN user_teams ut ON p.id = ut.player_id
-        WHERE ut.user_id = %s
-    ''', (user_id,))
-    user_team_raw = cur.fetchall()
-
-    my_team_list = []
-    total_team_points = 0
-    saved_player_ids = []
-    current_captain_id = None
-
-    for p in user_team_raw:
-        p_dict = dict(p)
-        if p_dict.get('is_captain'):
-            current_captain_id = p_dict['id']
-            
-        p_dict['total_points'] = calculate_fantasy_points(p_dict)
-        total_team_points += p_dict['total_points']
-        my_team_list.append(p_dict)
-        saved_player_ids.append(p_dict['id'])
-
-    cur.execute('SELECT * FROM players ORDER BY price DESC')
-    players_raw = cur.fetchall()
-    players_market = []
-    for p in players_raw:
-        p_dict = dict(p)
-        players_market.append({
-            'id': p_dict['id'],
-            'name': p_dict['name'],
-            'position': p_dict['position'],
-            'price': float(p_dict['price'] or 0), 
-            'real_team': p_dict['real_team'],
-            'goal': p_dict['goal'],
-            'assist': p_dict['assist'],
-            'clean_sheet': p_dict.get('clean_sheet', 0) or p_dict.get('clean_sheet_count', 0),
-            'saves': p_dict['saves'],
-            'yellow_card': p_dict['yellow_card'],
-            'red_card': p_dict['red_card'],
-            'total_points': calculate_fantasy_points(p_dict)
-        })
-    
-    cur.close()
-    conn.close()
-    
-    return render_template('pick_team.html', 
-                           my_team=my_team_list, 
-                           total_points=total_team_points,
-                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
-                           players_json=json.dumps(players_market), 
-                           saved_players=saved_player_ids, 
-                           budget=user_data['budget'],
-                           captain_id=current_captain_id)
-
-@app.route('/update-team-name', methods=['POST'])
-def update_team_name():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    new_name = request.form.get('new_team_name', '').strip()
-    if new_name:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        # ვაახლებთ კონკრეტული იუზერის team_name-ს ბაზაში
-        cur.execute('UPDATE "Users" SET team_name = %s WHERE id = %s', (new_name, session['user_id']))
-        conn.commit()
-        cur.close()
-        conn.close()
-        flash('გუნდის სახელი წარმატებით შეიცვალა!', 'success')
-        
-    return redirect(url_for('pick_team'))
-
-# ==========================================
-# 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
-# ==========================================
-
-@app.route('/leaderboard')
-def leaderboard():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    cur.execute('SELECT id, username, team_name FROM "Users"')
-    all_users = cur.fetchall()
-    
-    cur.execute("SELECT * FROM players")
-    all_players_raw = cur.fetchall()
-    
-    players_pool = {p['id']: p for p in all_players_raw}
-    
-    # 🟢 აქ დავაბრუნეთ is_captain-ის წამოღება බაზიდან!
-    cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
-    all_selections = cur.fetchall()
-    
-    cur.close()
-    conn.close()
-    
-    user_teams_map = {}
-    for sel in all_selections:
-        uid = sel['user_id']
-        if uid not in user_teams_map:
-            user_teams_map[uid] = []
-        user_teams_map[uid].append({
-            'player_id': sel['player_id'],
-            'is_captain': sel['is_captain'] # ვინახავთ კაპიტნის სტატუსს
-        })
-        
-    leaderboard_data = []
-    for u in all_users:
-        uid = u['id']
-        uname = u['username']
-        tname = u['team_name'] if u.get('team_name') else f"FC {uname}"
-        
-        u_team = user_teams_map.get(uid, [])
-        total_score = 0
-        
-        for item in u_team:
-            pid = item['player_id']
-            is_cap = item['is_captain']
-            
-            if pid in players_pool:
-                # აუცილებელია dict()-ში გადაყვანა, რომ is_captain ჩავუმატოთ
-                player_data = dict(players_pool[pid])
-                player_data['is_captain'] = is_cap # 🟢 აქ ხდება კაპიტნის გაორმაგება!
-                total_score += calculate_fantasy_points(player_data)
+                // შემოწმება 2: მაქსიმუმ 3 ფეხბურთელი ერთი გუნდიდან
+                const oldId = activeSlot.getAttribute('data-player-id');
+                let teamCount = 0;
                 
-        leaderboard_data.append({
-            'username': uname,
-            'team_name': tname,
-            'total_points': total_score,
-            'team_size': len(u_team)
-        })
+                selectedPlayers.forEach(p => {
+                    // თუ ვინმეს ვანაცვლებთ (ვცვლით), იმ ძველ ფეხბურთელს არ ვითვლით, რადგან ის გუნდიდან ამოდის
+                    if (p.id != oldId && p.real_team === player.real_team) {
+                        teamCount++;
+                    }
+                });
+
+                // თუ უკვე 3 ყავს, 4-ეს ვეღარ აირჩევს და პატარა ფანჯარა გამოხტება
+                if (teamCount >= 3) {
+                    alert(`❌ წესი დაირღვა: ${player.real_team}-დან 3 მოთამაშეზე მეტის აყვანა არ შეიძლება!`);
+                    return; // აქ ვბლოკავთ - ფუნქცია წყდება და მოედანზე აღარ სვამს
+                }
+
+                // თუ ორივე წესი დაცულია, ვაგრძელებთ ჩასმას
+                selectPlayerForSlot(player);
+            };
+
+            playerRow.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-weight:600; color: white;">${player.name}</div>
+                    <div style="color:#888; font-size: 0.75rem;">${player.real_team}</div>
+                    <div style="font-size: 0.8rem; color: #00ff87; margin-top: 3px; font-weight: bold;">
+                        PTS: ${player.total_points || 0} | ⚽ ${player.goal || 0} | 🅰️ ${player.assist || 0}
+                    </div>
+                </div>
+                <div class="p-pick-price" style="color: #00ff00; font-weight: bold;">${player.price}M</div>
+            `;
+            listContainer.appendChild(playerRow);
+        });
+    }
+
+    function selectPlayerForSlot(player) {
+        if (!activeSlot) return;
+        const oldId = activeSlot.getAttribute('data-player-id');
+        if (oldId) {
+            const oldP = selectedPlayers.find(x => x.id == oldId);
+            if (oldP) {
+                currentBudget += oldP.price;
+                selectedPlayers = selectedPlayers.filter(x => x.id != oldId);
+            }
+        }
+        currentBudget -= player.price;
+        selectedPlayers.push(player);
+        renderPlayerInSlot(player, activeSlot);
+        updateUI();
+        closeModal();
+    }
+
+    // 5. სტატისტიკის ჩვენება 
+    function showPlayerStats(playerId) {
+        const player = allPlayers.find(p => p.id == playerId);
+        if (!player) return;
+
+        modal.style.display = 'flex';
+        document.getElementById('modalTitlePosition').innerText = player.name + " - სტატისტიკა";
+        const listContainer = document.getElementById('modalPlayerList');
+        const isGK = player.position === 'მეკარე';
+
+        const isCaptain = (currentCaptainId == player.id);
+        const captainBtnHtml = isCaptain 
+            ? `<button disabled style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: #f1c40f; color: black; font-weight: bold; cursor: not-allowed;">👑 კაპიტანია</button>`
+            : `<button onclick="setCaptain('${player.id}')" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: var(--zeniti-green); color: black; font-weight: bold; cursor: pointer; transition: 0.2s;">👑 კაპიტნად არჩევა</button>`;
+
+        listContainer.innerHTML = `
+            <div class="stats-container" style="padding: 20px; color: white; width: 100%;">
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid #444;">
+                    <div style="color: #00ff87; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; text-align: center;">
+                        ${player.total_points || 0} ქულა
+                    </div>
+                    <div style="color: #aaa; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 0.8rem;">
+                        ${player.real_team} | ${player.position}
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: #111; padding: 12px 5px; border-radius: 10px; text-align:center;">
+                            <span style="font-size: 0.7rem; color: #888; text-transform: uppercase;">${isGK ? 'სეივი' : 'გოლი'}</span>
+                            <div style="font-size: 1.3rem; font-weight: bold; margin-top: 5px;">${isGK ? (player.saves || 0) : (player.goal || 0)}</div>
+                        </div>
+                        <div style="background: #111; padding: 12px 5px; border-radius: 10px; text-align:center;">
+                            <span style="font-size: 0.7rem; color: #888; text-transform: uppercase;">${isGK ? 'მშრალი' : 'პასი'}</span>
+                            <div style="font-size: 1.3rem; font-weight: bold; margin-top: 5px;">${isGK ? (player.clean_sheet || 0) : (player.assist || 0)}</div>
+                        </div>
+                        <div style="background: var(--zeniti-green); padding: 12px 5px; border-radius: 10px; color: black; text-align:center;">
+                            <span style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">ფასი</span>
+                            <div style="font-size: 1.3rem; font-weight: 900; margin-top: 5px;">${player.price}M</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+                    ${captainBtnHtml}
+                    <button onclick="closeModal()" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer;">დახურვა</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // კაპიტნის დაყენება
+    function setCaptain(playerId) {
+        currentCaptainId = playerId;
+        selectedPlayers.forEach(p => {
+            const slot = document.querySelector(`.player-slot[data-player-id="${p.id}"]`);
+            if (slot) renderPlayerInSlot(p, slot);
+        });
+        updateUI();
+        closeModal();
+        closeCaptainModal();
+    }
+
+    // კაპიტნის ახალი ფანჯრის ლოგიკა 
+    function openCaptainPicker() {
+        const listContainer = document.getElementById('captainPlayerList');
+        listContainer.innerHTML = '';
         
-    leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
-    return render_template('leaderboard.html', leaderboard=leaderboard_data)
+        selectedPlayers.forEach(p => {
+            const isCap = (p.id == currentCaptainId);
+            const row = document.createElement('div');
+            row.className = 'modal-player-row';
+            row.innerHTML = `
+                <div style="font-weight:bold; color:white;">${p.name} <span style="color:#aaa; font-size:0.8rem;">(${p.position})</span></div>
+                <button onclick="setCaptain('${p.id}')" style="background: ${isCap ? '#333' : 'var(--zeniti-green)'}; color: ${isCap ? '#888' : 'black'}; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor: ${isCap ? 'not-allowed' : 'pointer'};">
+                    ${isCap ? 'კაპიტანია' : 'არჩევა'}
+                </button>
+            `;
+            listContainer.appendChild(row);
+        });
+        captainModal.style.display = 'flex';
+    }
+
+    function closeCaptainModal() {
+        captainModal.style.display = 'none';
+    }
+
+    // დამხმარე ფუნქციები
+    function renderPlayerInSlot(player, slot) {
+        slot.setAttribute('data-player-id', player.id);
+        slot.querySelector('.slot-empty').style.display = 'none';
+        slot.querySelector('.slot-pos-label').style.display = 'none';
+
+        const existingVisual = slot.querySelector('.filled-player-visual');
+        if (existingVisual) existingVisual.remove();
+
+        const isCap = (player.id == currentCaptainId);
+        const capBadge = isCap 
+            ? `<div style="position:absolute; top:-8px; left:-8px; background:#f1c40f; color:black; font-weight:900; width:22px; height:22px; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; z-index:10; border:2px solid #1a1a1a; box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);">C</div>` 
+            : '';
+
+        const playerCardHtml = `
+            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease;">
+                ${capBadge}
+                <div class="remove-player-btn" onclick="removePlayer(event, '${player.id}', this)">×</div>
+                <div class="p-shirt-num" style="font-family:'Bebas Neue'; font-size:1.8rem; color:black; background:var(--zeniti-green); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 5px auto; border: 1px solid var(--zeniti-green);">
+                    ${player.shirt_number || '0'}
+                </div>
+                <div class="p-name" style="font-size:0.75rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white;">
+                    ${player.name.split(' ')[0]} 
+                </div>
+            </div>
+        `;
+        slot.insertAdjacentHTML('beforeend', playerCardHtml);
+    }
+
+    function removePlayer(event, playerId, btnElement) {
+        event.stopPropagation();
+        const playerIndex = selectedPlayers.findIndex(p => p.id == playerId);
+        if (playerIndex === -1) return;
+
+        currentBudget += selectedPlayers[playerIndex].price;
+        selectedPlayers.splice(playerIndex, 1);
+
+        if (playerId == currentCaptainId) {
+            currentCaptainId = "";
+        }
+
+        const slot = btnElement.closest('.player-slot');
+        slot.removeAttribute('data-player-id');
+        const visual = slot.querySelector('.filled-player-visual');
+        if (visual) visual.remove();
+        
+        slot.querySelector('.slot-empty').style.display = 'flex';
+        slot.querySelector('.slot-pos-label').style.display = 'block';
+
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('budget-val').innerText = currentBudget.toFixed(1) + "M";
+        document.getElementById('count-val').innerText = selectedPlayers.length + "/11";
+
+        const hiddenContainer = document.getElementById('hidden-inputs');
+        hiddenContainer.innerHTML = '';
+        selectedPlayers.forEach(p => {
+            hiddenContainer.innerHTML += `<input type="hidden" name="players" value="${p.id}">`;
+        });
+
+        const hiddenCaptainInput = document.getElementById('hidden-captain-id');
+        if (hiddenCaptainInput) {
+            hiddenCaptainInput.value = currentCaptainId;
+        }
+
+        const saveBtn = document.getElementById('save-btn');
+        const canSave = selectedPlayers.length === 11 && currentCaptainId !== "";
+        saveBtn.disabled = !canSave;
+        saveBtn.style.opacity = canSave ? '1' : '0.5';
+
+        // 🟢 აქ ემატება ახალი გრაფა (ღილაკი) კაპიტნის ასარჩევად მარცხენა პანელში
+        const statusText = document.getElementById('status-text');
+        if (statusText) {
+            if (selectedPlayers.length === 11 && (!currentCaptainId || currentCaptainId === "")) {
+                statusText.innerHTML = '<button type="button" onclick="openCaptainPicker()" style="background:#f1c40f; color:black; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer; font-family:\'Inter\', sans-serif; font-size: 1rem; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); animation: pulse 2s infinite;">👑 აირჩიეთ კაპიტანი</button>';
+            } else if (selectedPlayers.length < 11) {
+                statusText.innerHTML = "აირჩიეთ 11 მოთამაშე";
+                statusText.style.color = "#666";
+            } else {
+                statusText.innerHTML = "👑 კაპიტანი არჩეულია<br><span style='color:#ccc; font-size: 0.8rem;'>გუნდი მზადაა შესანახად!</span>";
+                statusText.style.color = "var(--zeniti-green)";
+            }
+        }
+    }
+
+    function toggleTransferMode() {
+        isTransferMode = !isTransferMode;
+        const field = document.querySelector('.pitch');
+        const btn = document.getElementById('transfer-btn');
+        
+        if (isTransferMode) {
+            field.classList.add('edit-mode');
+            btn.innerText = "დასრულება";
+            btn.style.background = "#e67e22";
+        } else {
+            field.classList.remove('edit-mode');
+            btn.innerText = "ტრანსფერები";
+            btn.style.background = "#3498db";
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        activeSlot = null;
+    }
+
+    function openNameEditModal() {
+        document.getElementById('nameModal').style.display = 'flex';
+    }
+
+    function closeNameEditModal() {
+        document.getElementById('nameModal').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
