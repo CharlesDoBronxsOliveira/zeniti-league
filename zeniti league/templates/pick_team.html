@@ -531,41 +531,6 @@ body {
         </form>
     </aside>
 
-    <div style="text-align: center; margin: 20px;">
-    <form action="/update-team-name" method="POST">
-        <input type="text" name="new_team_name" placeholder="გუნდის ახალი სახელი" required>
-        <button type="submit">სახელის შეცვლა</button>
-    </form>
-</div>
-
-<form action="/pick-team" method="POST">
-    
-    {% if is_locked %}
-        <div class="locked-msg">ტურნირი დაწყებულია! ტრანსფერები დაბლოკილია.</div>
-    {% endif %}
-
-    <div class="pitch">
-        </div>
-
-    <div id="captain-selection">
-        <h3>აირჩიე კაპიტანი (ქულები გაორმაგდება):</h3>
-        {% for player in my_team %}
-            <div>
-                <input type="radio" name="captain" value="{{ player.id }}" class="captain-radio" 
-                       {% if player.is_captain %}checked{% endif %} {% if is_locked %}disabled{% endif %}>
-                {{ player.name }}
-            </div>
-        {% endfor %}
-    </div>
-
-    <div id="hidden-inputs">
-        </div>
-
-    {% if not is_locked %}
-        <button type="submit" id="save-btn">გუნდის შენახვა</button>
-    {% endif %}
-</form>
-
     <!-- 3. სტადიონის არეა -->
     <main class="content-area">
         <!-- გუნდის სახელის ბლოკი (მწვანე ზონა) -->
@@ -828,18 +793,6 @@ body {
         saveBtn.disabled = selectedPlayers.length !== 11;
         // ღილაკს მხოლოდ ვთიშავთ, არ ვმალავთ, რომ დიზაინი არ აირიოს
         saveBtn.style.opacity = (selectedPlayers.length === 11) ? '1' : '0.5';
-    }
-
-    // შენი არსებული JavaScript ფუნქციები + დაამატე ეს, რომ კაპიტანი აირჩეს
-    let selectedPlayers = {{ my_team|tojson if my_team else [] }};
-    
-    // updateUI-ს ფუნქციაში დაამატე hidden input-ების შევსება
-    function updateUI() {
-        const hiddenContainer = document.getElementById('hidden-inputs');
-        hiddenContainer.innerHTML = '';
-        selectedPlayers.forEach(p => {
-            hiddenContainer.innerHTML += `<input type="hidden" name="players" value="${p.id}">`;
-        });
     }
 
     function toggleTransferMode() {
