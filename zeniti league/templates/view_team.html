@@ -71,7 +71,7 @@
 
     <div class="pitch-container">
         <div class="pitch-line">
-            {% for p in team if 'თავდამსხმელი' in p.position %}
+            {% for p in team if p.position.strip() == 'თავდამსხმელი' %}
                 <div class="read-only-card">
                     {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
                     <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
@@ -82,7 +82,7 @@
         </div>
 
         <div class="pitch-line">
-            {% for p in team if 'ნახევარმცველი' in p.position %}
+            {% for p in team if p.position.strip() == 'ნახევარმცველი' %}
                 <div class="read-only-card">
                     {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
                     <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="pitch-line">
-            {% for p in team if 'მცველი' in p.position %}
+            {% for p in team if p.position.strip() == 'მცველი' %}
                 <div class="read-only-card">
                     {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
                     <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
@@ -104,7 +104,7 @@
         </div>
 
         <div class="pitch-line">
-            {% for p in team if 'მეკარე' in p.position %}
+            {% for p in team if p.position.strip() == 'მეკარე' %}
                 <div class="read-only-card">
                     {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
                     <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
