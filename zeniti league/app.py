@@ -323,6 +323,24 @@ def pick_team():
                            saved_players=saved_player_ids, 
                            budget=user_data['budget'])
 
+@app.route('/update-team-name', methods=['POST'])
+def update_team_name():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    new_name = request.form.get('new_team_name', '').strip()
+    if new_name:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # ვაახლებთ კონკრეტული იუზერის team_name-ს ბაზაში
+        cur.execute('UPDATE "Users" SET team_name = %s WHERE id = %s', (new_name, session['user_id']))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('გუნდის სახელი წარმატებით შეიცვალა!', 'success')
+        
+    return redirect(url_for('pick_team'))
+
 # ==========================================
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
 # ==========================================
