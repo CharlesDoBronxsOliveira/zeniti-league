@@ -497,9 +497,7 @@ body {
 </header>
 
 <div class="main-wrapper">
-    <!-- 2. გვერდითა პანელი (Sidebar) -->
     <aside class="sidebar-stats">
-        <!-- ჯამური ქულის ბლოკი (წითელი ზონა) -->
         <div class="stat-box" style="margin-bottom: 20px; border: 2px solid #ff4757; background: rgba(255, 71, 87, 0.05);">
             <div class="stat-label" style="color: #ff4757;">ჯამური ქულა</div>
             <div class="stat-value" id="total-pts-val" style="color: #fff; font-size: 2.2rem;">{{ total_points }}</div>
@@ -516,20 +514,15 @@ body {
             </div>
         </div>
 
-        <!-- შენახვის ფორმა -->
         <form id="final-team-form" action="{{ url_for('pick_team') }}" method="POST" style="margin-top: auto;">
+            
             <div id="hidden-inputs"></div>
+            <input type="hidden" name="captain_id" id="hidden-captain-id" value="">
+            
             <div class="info-text" id="status-text" style="font-size: 0.7rem; color: #666; margin-bottom: 10px; text-align: center;">
                 აირჩიეთ 11 მოთამაშე
             </div>
-            <div style="margin: 20px 0; text-align: left; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(46, 204, 113, 0.2);">
-    <label style="color: #00ff87; font-family: 'Inter', sans-serif; font-size: 0.9rem; display: block; margin-bottom: 8px; font-weight: bold;">
-        👑 გუნდის კაპიტანი (ორმაგი ქულა):
-    </label>
-    <select id="captain-select" name="captain_id" required style="width: 100%; padding: 12px; background: #0b0b0b; border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; cursor: pointer;">
-        <option value="">-- ჯერ აირჩიეთ 11 მოთამაშე --</option>
-    </select>
-</div>
+            
             <button type="button" id="transfer-btn" class="btn-save-sidebar" style="background: #3498db; margin-bottom: 10px;" onclick="toggleTransferMode()">
                 ტრანსფერები
             </button>
@@ -606,6 +599,8 @@ body {
 
 <script>
     let savedCaptainId = "{{ captain_id or '' }}";
+    let currentCaptainId = savedCaptainId; // გლობალური ცვლადი კაპიტნისთვის
+
     // 1. მონაცემების მომზადება
     const savedPlayerIds = {{ saved_players | tojson | safe }} || []; 
     const allPlayers = JSON.parse('{{ players_json | safe }}' || '[]');
@@ -621,7 +616,6 @@ body {
     // 2. გვერდის ჩატვირთვა და გუნდის აღდგენა
     window.onload = function() {
         if (Array.isArray(savedPlayerIds) && savedPlayerIds.length > 0) {
-            // ბიუჯეტის დათვლამდე ვასუფთავებთ, რადგან ქვემოთ თავიდან დააკლდება
             currentBudget = initialBudgetFromDB;
             
             savedPlayerIds.forEach(id => {
@@ -714,7 +708,7 @@ body {
         closeModal();
     }
 
-    // 5. სტატისტიკის ჩვენება (PTS-ის დამატებით)
+    // 5. სტატისტიკის ჩვენება (და კაპიტნად არჩევის ღილაკი)
     function showPlayerStats(playerId) {
         const player = allPlayers.find(p => p.id == playerId);
         if (!player) return;
@@ -723,6 +717,12 @@ body {
         document.getElementById('modalTitlePosition').innerText = player.name + " - სტატისტიკა";
         const listContainer = document.getElementById('modalPlayerList');
         const isGK = player.position === 'მეკარე';
+
+        // ვამოწმებთ არის თუ არა უკვე კაპიტანი
+        const isCaptain = (currentCaptainId == player.id);
+        const captainBtnHtml = isCaptain 
+            ? `<button disabled style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: #f1c40f; color: black; font-weight: bold; cursor: not-allowed;">👑 კაპიტანია</button>`
+            : `<button onclick="setCaptain('${player.id}')" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: var(--zeniti-green); color: black; font-weight: bold; cursor: pointer; transition: 0.2s;">👑 კაპიტნად არჩევა</button>`;
 
         listContainer.innerHTML = `
             <div class="stats-container" style="padding: 20px; color: white; width: 100%;">
@@ -754,12 +754,28 @@ body {
                         <p style="margin: 0;">🟥 წითელი: <b>${player.red_card || 0}</b></p>
                     </div>
                 </div>
-                <button onclick="closeModal()" style="margin-top: 20px; width: 100%; padding: 15px; border-radius: 12px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer;">დახურვა</button>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+                    ${captainBtnHtml}
+                    <button onclick="closeModal()" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer;">დახურვა</button>
+                </div>
             </div>
         `;
     }
 
-    // 6. დამხმარე ფუნქციები (PTS-ის ასახვით ბარათზე)
+    // ახალი ფუნქცია: კაპიტნის დაყენება
+    function setCaptain(playerId) {
+        currentCaptainId = playerId;
+        // ვახლებთ მოედანს, რომ ახალ კაპიტანს "C" ნიშანი გაუჩნდეს, სხვას კი გაუქრეს
+        selectedPlayers.forEach(p => {
+            const slot = document.querySelector(`.player-slot[data-player-id="${p.id}"]`);
+            if (slot) renderPlayerInSlot(p, slot);
+        });
+        updateUI();
+        closeModal();
+    }
+
+    // 6. დამხმარე ფუნქციები (C ნიშნის დამატებით)
     function renderPlayerInSlot(player, slot) {
         slot.setAttribute('data-player-id', player.id);
         slot.querySelector('.slot-empty').style.display = 'none';
@@ -768,8 +784,15 @@ body {
         const existingVisual = slot.querySelector('.filled-player-visual');
         if (existingVisual) existingVisual.remove();
 
+        // C ნიშნის ვიზუალი
+        const isCap = (player.id == currentCaptainId);
+        const capBadge = isCap 
+            ? `<div style="position:absolute; top:-8px; left:-8px; background:#f1c40f; color:black; font-weight:900; width:22px; height:22px; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; z-index:10; border:2px solid #1a1a1a; box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);">C</div>` 
+            : '';
+
         const playerCardHtml = `
             <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease;">
+                ${capBadge}
                 <div class="remove-player-btn" onclick="removePlayer(event, '${player.id}', this)">×</div>
                 <div class="p-shirt-num" style="font-family:'Bebas Neue'; font-size:1.8rem; color:white; background:rgba(46, 204, 113, 0.2); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 5px auto; border: 1px solid var(--zeniti-green);">
                     ${player.shirt_number || '0'}
@@ -793,6 +816,11 @@ body {
         currentBudget += selectedPlayers[playerIndex].price;
         selectedPlayers.splice(playerIndex, 1);
 
+        // თუ ამოგდებული ფეხბურთელი კაპიტანი იყო, ვანულებთ კაპიტანს
+        if (playerId == currentCaptainId) {
+            currentCaptainId = "";
+        }
+
         const slot = btnElement.closest('.player-slot');
         slot.removeAttribute('data-player-id');
         const visual = slot.querySelector('.filled-player-visual');
@@ -814,23 +842,31 @@ body {
             hiddenContainer.innerHTML += `<input type="hidden" name="players" value="${p.id}">`;
         });
 
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.disabled = selectedPlayers.length !== 11;
-        // ღილაკს მხოლოდ ვთიშავთ, არ ვმალავთ, რომ დიზაინი არ აირიოს
-        saveBtn.style.opacity = (selectedPlayers.length === 11) ? '1' : '0.5';
+        // ვაახლებთ ფარულ კაპიტნის ველს ფორმისთვის
+        const hiddenCaptainInput = document.getElementById('hidden-captain-id');
+        if (hiddenCaptainInput) {
+            hiddenCaptainInput.value = currentCaptainId;
+        }
 
-        // === კაპიტნის სელექთის დინამიური განახლება ===
-        const captainSelect = document.getElementById('captain-select');
-        const currentlySelectedCaptain = captainSelect.value || savedCaptainId;
-        
-        if (selectedPlayers.length === 11) {
-            captainSelect.innerHTML = '<option value="">-- აირჩიე კაპიტანი --</option>';
-            selectedPlayers.forEach(p => {
-                const isSelected = (p.id == currentlySelectedCaptain) ? 'selected' : '';
-                captainSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${p.name} (${p.position})</option>`;
-            });
-        } else {
-            captainSelect.innerHTML = '<option value="">-- ჯერ აირჩიეთ 11 მოთამაშე --</option>';
+        const saveBtn = document.getElementById('save-btn');
+        // შენახვისთვის აუცილებელია 11 ფეხბურთელი + არჩეული კაპიტანი
+        const canSave = selectedPlayers.length === 11 && currentCaptainId !== "";
+        saveBtn.disabled = !canSave;
+        saveBtn.style.opacity = canSave ? '1' : '0.5';
+
+        // სტატუსის ტექსტის განახლება
+        const statusText = document.getElementById('status-text');
+        if (statusText) {
+            if (selectedPlayers.length === 11 && (!currentCaptainId || currentCaptainId === "")) {
+                statusText.innerText = "გთხოვთ, აირჩიოთ კაპიტანი!";
+                statusText.style.color = "#f1c40f";
+            } else if (selectedPlayers.length < 11) {
+                statusText.innerText = "აირჩიეთ 11 მოთამაშე";
+                statusText.style.color = "#666";
+            } else {
+                statusText.innerText = "გუნდი მზადაა!";
+                statusText.style.color = "var(--zeniti-green)";
+            }
         }
     }
 
