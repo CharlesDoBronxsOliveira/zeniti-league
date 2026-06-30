@@ -395,6 +395,10 @@ def update_team_name():
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
 # ==========================================
 
+# ==========================================
+# 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
+# ==========================================
+
 @app.route('/leaderboard')
 def leaderboard():
     conn = get_db_connection()
@@ -446,6 +450,7 @@ def leaderboard():
                 total_score += calculate_fantasy_points(player_data)
                 
         leaderboard_data.append({
+            'user_id': uid,       # 🟢 დამატებულია user_id სხვისი გუნდის სანახავად
             'username': uname,
             'team_name': tname,
             'total_points': total_score,
@@ -456,3 +461,48 @@ def leaderboard():
     leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
     
     return render_template('leaderboard.html', leaderboard=leaderboard_data)
+
+# ==========================================
+# 👀 სხვისი გუნდის ნახვა (View Team)
+# ==========================================
+@app.route('/view-team/<int:target_user_id>')
+def view_team(target_user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # ვეძებთ მომხმარებელს ბაზაში
+    cur.execute('SELECT username, team_name FROM "Users" WHERE id = %s', (target_user_id,))
+    target_user = cur.fetchone()
+
+    if not target_user:
+        cur.close()
+        conn.close()
+        flash("მომხმარებელი ვერ მოიძებნა!", "error")
+        return redirect(url_for('leaderboard'))
+
+    # მოგვაქვს ამ მომხმარებლის გუნდი და კაპიტანი
+    cur.execute('''
+        SELECT p.*, ut.is_captain FROM players p
+        JOIN user_teams ut ON p.id = ut.player_id
+        WHERE ut.user_id = %s
+    ''', (target_user_id,))
+    user_team_raw = cur.fetchall()
+
+    my_team_list = []
+    total_team_points = 0
+
+    for p in user_team_raw:
+        p_dict = dict(p)
+        p_dict['total_points'] = calculate_fantasy_points(p_dict)
+        total_team_points += p_dict['total_points']
+        my_team_list.append(p_dict)
+
+    cur.close()
+    conn.close()
+
+    # ვაგზავნით მონაცემებს ახალ HTML გვერდზე
+    return render_template('view_team.html', 
+                           team=my_team_list, 
+                           total_points=total_team_points,
+                           team_name=target_user['team_name'] if target_user['team_name'] else f"FC {target_user['username']}",
+                           username=target_user['username'])
