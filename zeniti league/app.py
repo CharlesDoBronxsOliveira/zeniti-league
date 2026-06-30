@@ -400,17 +400,16 @@ def leaderboard():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # ამოგვაქვს id, username და team_name
     cur.execute('SELECT id, username, team_name FROM "Users"')
     all_users = cur.fetchall()
     
     cur.execute("SELECT * FROM players")
     all_players_raw = cur.fetchall()
     
-    # ვაგვარებთ 500 error-ს
     players_pool = {p['id']: p for p in all_players_raw}
     
-    cur.execute("SELECT user_id, player_id FROM user_teams")
+    # 🟢 აქ დავაბრუნეთ is_captain-ის წამოღება බაზიდან!
+    cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
     all_selections = cur.fetchall()
     
     cur.close()
@@ -421,21 +420,28 @@ def leaderboard():
         uid = sel['user_id']
         if uid not in user_teams_map:
             user_teams_map[uid] = []
-        user_teams_map[uid].append(sel['player_id'])
+        user_teams_map[uid].append({
+            'player_id': sel['player_id'],
+            'is_captain': sel['is_captain'] # ვინახავთ კაპიტნის სტატუსს
+        })
         
     leaderboard_data = []
     for u in all_users:
         uid = u['id']
         uname = u['username']
-        # თუ მომხმარებელს არ აქვს მითითებული გუნდი, დეფოლტად გამოუჩნდეს "FC [სახელი]"
         tname = u['team_name'] if u.get('team_name') else f"FC {uname}"
         
         u_team = user_teams_map.get(uid, [])
         total_score = 0
         
-        for pid in u_team:
+        for item in u_team:
+            pid = item['player_id']
+            is_cap = item['is_captain']
+            
             if pid in players_pool:
-                player_data = players_pool[pid]
+                # აუცილებელია dict()-ში გადაყვანა, რომ is_captain ჩავუმატოთ
+                player_data = dict(players_pool[pid])
+                player_data['is_captain'] = is_cap # 🟢 აქ ხდება კაპიტნის გაორმაგება!
                 total_score += calculate_fantasy_points(player_data)
                 
         leaderboard_data.append({
@@ -445,11 +451,5 @@ def leaderboard():
             'team_size': len(u_team)
         })
         
-    # სორტირება ქულების მიხედვით
     leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
-    
     return render_template('leaderboard.html', leaderboard=leaderboard_data)
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
