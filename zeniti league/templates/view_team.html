@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ team_name }} - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+
+        body {
+            margin: 0; background: #0b0b0b; color: white;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), url('/static/images/stadium.jpg');
+            background-size: cover; background-attachment: fixed;
+            display: flex; flex-direction: column; align-items: center; padding-bottom: 50px;
+        }
+
+        .header-banner {
+            margin-top: 40px; text-align: center;
+        }
+
+        .header-banner h1 {
+            color: #2ecc71; font-family: 'Bebas Neue', sans-serif; font-size: 3rem; margin: 0; letter-spacing: 2px;
+        }
+
+        .header-banner p { color: #aaa; margin-top: 5px; font-size: 1rem; }
+
+        .pitch-container {
+            width: 100%; max-width: 1000px; margin-top: 30px;
+            background: rgba(26, 71, 42, 0.85); /* მწვანე სტადიონის ფონი */
+            border: 3px solid #2ecc71; border-radius: 20px;
+            padding: 40px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+
+        .pitch-line {
+            display: flex; justify-content: center; gap: 20px; margin-bottom: 30px;
+        }
+
+        /* მოთამაშის მარტივი ბარათი */
+        .read-only-card {
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(46, 204, 113, 0.4);
+            border-radius: 12px; padding: 15px; width: 100px; text-align: center;
+            position: relative; transition: 0.3s;
+        }
+
+        .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
+
+        .p-shirt {
+            font-family: 'Bebas Neue'; font-size: 1.8rem; color: black; background: #2ecc71;
+            width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px auto;
+        }
+
+        .p-name { font-size: 0.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-pts { color: #00ff87; font-weight: 900; font-size: 0.9rem; margin-top: 5px; background: rgba(0,0,0,0.5); border-radius: 5px; padding: 2px; }
+
+        .captain-badge {
+            position: absolute; top: -10px; left: -10px; background: #f1c40f; color: black;
+            font-weight: 900; width: 25px; height: 25px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 14px; border: 2px solid #1a1a1a;
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-banner">
+        <h1>{{ team_name }}</h1>
+        <p>მომხმარებელი: <b>{{ username }}</b> | ჯამური ქულა: <b style="color: #2ecc71; font-size: 1.2rem;">{{ total_points }}</b></p>
+        <a href="{{ url_for('leaderboard') }}" style="color: #3498db; text-decoration: none; font-weight: bold;">← ცხრილში დაბრუნება</a>
+    </div>
+
+    <div class="pitch-container">
+        <div class="pitch-line">
+            {% for p in team if 'თავდამსხმელი' in p.position %}
+                <div class="read-only-card">
+                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
+                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
+                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
+                    <div class="p-pts">{{ p.total_points }} PTS</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for p in team if 'ნახევარმცველი' in p.position %}
+                <div class="read-only-card">
+                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
+                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
+                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
+                    <div class="p-pts">{{ p.total_points }} PTS</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for p in team if 'მცველი' in p.position %}
+                <div class="read-only-card">
+                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
+                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
+                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
+                    <div class="p-pts">{{ p.total_points }} PTS</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pitch-line">
+            {% for p in team if 'მეკარე' in p.position %}
+                <div class="read-only-card">
+                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
+                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
+                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
+                    <div class="p-pts">{{ p.total_points }} PTS</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>
