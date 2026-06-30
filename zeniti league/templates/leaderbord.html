@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ლიდერბორდი - Zeniti Fantasy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+
+        :root {
+            --zeniti-green: #2ecc71;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95)), 
+                        url('/static/images/stadium.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            overflow-x: hidden;
+        }
+
+        .main-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 80px;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px;
+            border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+            z-index: 1100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--zeniti-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: #eee;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover { color: var(--zeniti-green); }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px; left: 15px; right: 15px;
+            height: 3px; background: var(--zeniti-green);
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--zeniti-green);
+        }
+
+        .content-area {
+            margin-top: 120px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .table-container {
+            width: 90%;
+            max-width: 900px;
+            background: rgba(15, 15, 15, 0.75);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        .page-title {
+            color: #00ff87;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 5px 0;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .page-subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .leaderboard-table th {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            letter-spacing: 1px;
+        }
+
+        .leaderboard-table td {
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        .leaderboard-table tr:hover {
+            background: rgba(46, 204, 113, 0.04);
+        }
+
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .rank-1 { background: linear-gradient(45deg, #f1c40f, #f39c12); color: black; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .rank-2 { background: linear-gradient(45deg, #bdc3c7, #95a5a6); color: black; }
+        .rank-3 { background: linear-gradient(45deg, #e67e22, #d35400); color: white; }
+
+        .team-name-td {
+            font-weight: 600;
+            color: #00ff87;
+        }
+
+        .username-span {
+            font-size: 0.8rem;
+            color: #888;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .points-td {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            color: white;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+
+        .size-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #ccc;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="logo">ZENITI <span style="color:white; -webkit-text-fill-color: white;">LEAGUE</span></div>
+    <nav style="display:flex; gap:15px;">
+        <a href="{{ url_for('home') }}" class="nav-link">მთავარი</a>
+        <a href="{{ url_for('leaderboard') }}" class="nav-link active">ცხრილი</a>
+        <a href="{{ url_for('pick_team') }}" class="nav-link">ჩემი გუნდი</a>
+    </nav>
+    <div style="width: 100px;"></div> 
+</header>
+
+<main class="content-area">
+    <div class="table-container">
+        <h1 class="page-title">საერთო რეიტინგი</h1>
+        <div class="page-subtitle">მომხმარებელთა ლიდერბორდი ქულების მიხედვით</div>
+
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">პოზიცია</th>
+                    <th>გუნდი / მწვრთნელი</th>
+                    <th style="text-align: center; width: 120px;">მოთამაშეები</th>
+                    <th style="text-align: right; width: 120px;">ქულა</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in leaderboard %}
+                <tr>
+                    <td>
+                        <div class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="team-name-td">{{ user.team_name }}</span>
+                        <span class="username-span">მწვრთნელი: @{{ user.username }}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="size-badge">{{ user.team_size }}/11</span>
+                    </td>
+                    <td style="text-align: right;" class="points-td">
+                        {{ user.total_points }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+
+</body>
+</html>
