@@ -1,8 +1,9 @@
 import os
 import psycopg2
 from psycopg2.extras import DictCursor
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 import json
 
 app = Flask(__name__)
@@ -241,41 +242,60 @@ def pick_team():
     cur = conn.cursor()
     user_id = session['user_id']
     
+    # დედლაინის შემოწმება
+    deadline = datetime(2026, 7, 25, 20, 0, 0)
+    is_locked = datetime.now() > deadline
+
     cur.execute('SELECT budget, team_name FROM "Users" WHERE id = %s', (user_id,))
     user_data = cur.fetchone()
-    
-    if not user_data:
-        cur.close()
-        conn.close()
-        return "მომხმარებელი ვერ მოიძებნა!"
 
     if request.method == 'POST':
+        if is_locked:
+            flash("ტურნირი დაწყებულია! ტრანსფერები და კაპიტნის ცვლილება დაბლოკილია.", "error")
+            return redirect(url_for('pick_team'))
+
         selected_ids = request.form.getlist('players')
-        
+        captain_id = request.form.get('captain') # HTML-ში უნდა გქონდეს name="captain" რადიო ღილაკი
+
         if len(selected_ids) != 11:
             flash("აირჩიეთ ზუსტად 11 მოთამაშე!", "error")
             return redirect(url_for('pick_team'))
 
-        selected_ids = [int(i) for i in selected_ids]
-        
-        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
-        cost_row = cur.fetchone()
-        total_cost = cost_row['total_cost'] or 0
-
-        if float(total_cost) > float(user_data['budget']):
-            flash(f"არ გაქვთ საკმარისი ბიუჯეტი! საჭიროა: {total_cost}M, გაქვთ: {user_data['budget']}M", "error")
+        if not captain_id:
+            flash("აირჩიეთ კაპიტანი!", "error")
             return redirect(url_for('pick_team'))
 
+        selected_ids = [int(i) for i in selected_ids]
+        
+        # 1. ბიუჯეტის შემოწმება
+        cur.execute('SELECT SUM(price) as total_cost FROM players WHERE id = ANY(%s)', (selected_ids,))
+        total_cost = cur.fetchone()['total_cost'] or 0
+        if float(total_cost) > float(user_data['budget']):
+            flash(f"არ გაქვთ საკმარისი ბიუჯეტი!", "error")
+            return redirect(url_for('pick_team'))
+
+        # 2. 3-ფეხბურთელიანი ლიმიტის შემოწმება
+        cur.execute('SELECT real_team FROM players WHERE id = ANY(%s)', (selected_ids,))
+        teams = [r['real_team'] for r in cur.fetchall()]
+        for t in set(teams):
+            if teams.count(t) > 3:
+                flash(f"ლიმიტი დარღვეულია: {t}-დან მაქს 3 ფეხბურთელია დასაშვები!", "error")
+                return redirect(url_for('pick_team'))
+
+        # გუნდის შენახვა
         cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
         for p_id in selected_ids:
-            cur.execute('INSERT INTO user_teams (user_id, player_id) VALUES (%s, %s)', (user_id, p_id))
+            is_cap = (int(p_id) == int(captain_id))
+            cur.execute('INSERT INTO user_teams (user_id, player_id, is_captain) VALUES (%s, %s, %s)', 
+                        (user_id, p_id, is_cap))
         
         conn.commit()
         flash("გუნდი წარმატებით დაკომპლექტდა!", "success")
         return redirect(url_for('pick_team'))
 
+    # გვერდის ჩატვირთვა
     cur.execute('''
-        SELECT p.* FROM players p
+        SELECT p.*, ut.is_captain FROM players p
         JOIN user_teams ut ON p.id = ut.player_id
         WHERE ut.user_id = %s
     ''', (user_id,))
@@ -287,30 +307,14 @@ def pick_team():
 
     for p in user_team_raw:
         p_dict = dict(p)
-        p_dict['total_points'] = calculate_fantasy_points(p_dict)
+        # კაპიტნის ბონუსი ქულებში
+        p_dict['total_points'] = calculate_fantasy_points(p_dict, is_captain=p_dict['is_captain'])
         total_team_points += p_dict['total_points']
         my_team_list.append(p_dict)
         saved_player_ids.append(p_dict['id'])
 
     cur.execute('SELECT * FROM players ORDER BY price DESC')
-    players_raw = cur.fetchall()
-    players_market = []
-    for p in players_raw:
-        p_dict = dict(p)
-        players_market.append({
-            'id': p_dict['id'],
-            'name': p_dict['name'],
-            'position': p_dict['position'],
-            'price': float(p_dict['price'] or 0), 
-            'real_team': p_dict['real_team'],
-            'goal': p_dict['goal'],
-            'assist': p_dict['assist'],
-            'clean_sheet': p_dict.get('clean_sheet', 0) or p_dict.get('clean_sheet_count', 0),
-            'saves': p_dict['saves'],
-            'yellow_card': p_dict['yellow_card'],
-            'red_card': p_dict['red_card'],
-            'total_points': calculate_fantasy_points(p_dict)
-        })
+    players_market = [dict(p) for p in cur.fetchall()]
     
     cur.close()
     conn.close()
@@ -318,10 +322,21 @@ def pick_team():
     return render_template('pick_team.html', 
                            my_team=my_team_list, 
                            total_points=total_team_points,
-                           team_name=user_data['team_name'] if user_data['team_name'] else "ჩემი გუნდი",
+                           team_name=user_data['team_name'],
                            players_json=json.dumps(players_market), 
-                           saved_players=saved_player_ids, 
-                           budget=user_data['budget'])
+                           saved_players=saved_player_ids,
+                           is_locked=is_locked)
+
+@app.route('/update-team-name', methods=['POST'])
+def update_team_name():
+    new_name = request.form.get('new_team_name')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('UPDATE "Users" SET team_name = %s WHERE id = %s', (new_name, session['user_id']))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('pick_team'))
 
 # ==========================================
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
