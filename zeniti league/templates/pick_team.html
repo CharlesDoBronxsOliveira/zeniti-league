@@ -678,6 +678,8 @@ body {
     }
 
     // 4. მოთამაშის არჩევა (მოდალში)
+    // 4. მოთამაშის არჩევა (მოდალში) - 3 მოთამაშის ლიმიტით
+    // 4. მოთამაშის არჩევა (მოდალში) - 3 მოთამაშის ლიმიტით
     function openPlayerPicker(position, slotElement) {
         activeSlot = slotElement; 
         modal.style.display = 'flex';
@@ -693,11 +695,33 @@ body {
 
             const playerRow = document.createElement('div');
             playerRow.className = 'modal-player-row';
+            
+            // 🟢 აქ ხდება შემოწმება დაწკაპუნებისას!
             playerRow.onclick = () => {
+                // შემოწმება 1: ბიუჯეტი
                 if (currentBudget - player.price < 0) {
-                    alert("ბიუჯეტი არ გყოფნით!");
+                    alert("❌ ბიუჯეტი არ გყოფნით!");
                     return;
                 }
+
+                // შემოწმება 2: მაქსიმუმ 3 ფეხბურთელი ერთი გუნდიდან
+                const oldId = activeSlot.getAttribute('data-player-id');
+                let teamCount = 0;
+                
+                selectedPlayers.forEach(p => {
+                    // თუ ვინმეს ვანაცვლებთ (ვცვლით), იმ ძველ ფეხბურთელს არ ვითვლით, რადგან ის გუნდიდან ამოდის
+                    if (p.id != oldId && p.real_team === player.real_team) {
+                        teamCount++;
+                    }
+                });
+
+                // თუ უკვე 3 ყავს, 4-ეს ვეღარ აირჩევს და პატარა ფანჯარა გამოხტება
+                if (teamCount >= 3) {
+                    alert(`❌ წესი დაირღვა: ერთი გუნდიდან (${player.real_team}) შეგიძლიათ მაქსიმუმ 3 მოთამაშის აყვანა!`);
+                    return; // აქ ვბლოკავთ - ფუნქცია წყდება და მოედანზე აღარ სვამს
+                }
+
+                // თუ ორივე წესი დაცულია, ვაგრძელებთ ჩასმას
                 selectPlayerForSlot(player);
             };
 
