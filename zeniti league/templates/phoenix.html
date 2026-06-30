@@ -55,7 +55,7 @@
             padding: 20px 0;
             margin-bottom: 0px !important; 
             padding-bottom: 5px !important;
-            margin-top: 60px; /* ადგილი ღილაკისთვის */
+            margin-top: 60px;
         }
 
         .logo-box {
@@ -323,33 +323,30 @@
                 letter-spacing: 1px;
             }
 
-            /* 🟢 მთავარი ცვლილება: სტადიონის ფონის და Lineup განლაგების დაბრუნება */
             .players-grid {
                 background-image: url('https://bitsoc.io/wp-content/uploads/2023/11/football-pitch.png');
                 background-size: cover;
                 background-position: center;
                 padding: 20px 0;
-                gap: 15px; /* დაშორება დაცვასა და ნახევარდაცვას შორის */
+                gap: 15px; 
                 min-height: 550px;
             }
 
             .pitch-line {
-                flex-direction: row; /* ისევ ჰორიზონტალური განლაგება */
-                flex-wrap: wrap; /* თუ ბევრი მოთამაშეა, ქვემოთ ჩამოიტანს */
+                flex-direction: row; 
+                flex-wrap: wrap; 
                 justify-content: center;
-                gap: 8px; /* დაშორება ბარათებს შორის */
+                gap: 8px; 
                 width: 100%;
                 padding: 0 5px;
             }
 
-            /* 🟢 მინი-ბარათების ზომები მობილურისთვის */
             .player-card {
-                height: 120px;
-                width: 31%; /* 3 მოთამაშე იდეალურად ეტევა ერთ ხაზზე */
+                height: 135px; /* გავზარდეთ სიმაღლე, რომ გრძელი სახელები დაეტიოს */
+                width: 31%; 
                 max-width: 115px;
             }
 
-            /* წინა მხარე: ლოგო და ტექსტი ერთმანეთის ქვეშ */
             .card-front {
                 flex-direction: column;
                 justify-content: center;
@@ -364,13 +361,13 @@
                 min-width: auto;
             }
 
+            /* 🟢 აი აქ გავასწორეთ სახელების გადასვლა (ტექსტის ჩამოტანა) */
             .p-info h4 {
-                font-size: 0.8rem;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis; /* გრძელ სახელებს ...-ით დაამოკლებს */
-                max-width: 100%;
-                line-height: 1.2;
+                font-size: 0.75rem;
+                white-space: normal; /* აძლევს უფლებას მეორე ხაზზე გადავიდეს */
+                word-wrap: break-word; /* გრძელ სიტყვებსაც გადაიტანს */
+                line-height: 1.1;
+                margin-top: 2px;
             }
 
             .p-info p {
@@ -378,13 +375,12 @@
                 margin-top: 3px;
             }
 
-            /* ამოტრიალებული უკანა მხარე: სტატისტიკა ვერტიკალურად */
             .card-back {
                 padding: 5px;
             }
 
             .stats-grid {
-                flex-direction: column; /* ერთმანეთის ქვეშ დალაგება */
+                flex-direction: column; 
                 gap: 2px;
             }
 
@@ -392,7 +388,7 @@
                 padding: 2px;
                 width: 100%;
                 border: none;
-                border-bottom: 1px solid rgba(255,255,255,0.05); /* ნაზი ხაზი გამოყოფისთვის */
+                border-bottom: 1px solid rgba(255,255,255,0.05); 
                 border-radius: 0;
             }
             .stat-item:last-child {
@@ -444,7 +440,7 @@
                         <div class="stats-grid">
                             <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
                             <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
-                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">${{ player.total_points }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
                 </div>
@@ -467,7 +463,7 @@
                         <div class="stats-grid">
                             <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
                             <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
-                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">${{ player.total_points }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
                 </div>
@@ -490,7 +486,7 @@
                         <div class="stats-grid">
                             <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
                             <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
-                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">${{ player.total_points }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
                 </div>
@@ -513,7 +509,7 @@
                         <div class="stats-grid">
                             <div class="stat-item"><span>გოლი</span><div class="stat-value">{{ player.goal }}</div></div>
                             <div class="stat-item"><span>ასისტი</span><div class="stat-value">{{ player.assist }}</div></div>
-                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">${{ player.total_points }}</div></div>
+                            <div class="stat-item"><span>ქულა</span><div class="stat-value" style="color: var(--zeniti-green);">{{ player.total_points }}</div></div>
                         </div>
                     </div>
                 </div>
