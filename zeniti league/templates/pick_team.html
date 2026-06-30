@@ -522,6 +522,14 @@ body {
             <div class="info-text" id="status-text" style="font-size: 0.7rem; color: #666; margin-bottom: 10px; text-align: center;">
                 აირჩიეთ 11 მოთამაშე
             </div>
+            <div style="margin: 20px 0; text-align: left; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(46, 204, 113, 0.2);">
+    <label style="color: #00ff87; font-family: 'Inter', sans-serif; font-size: 0.9rem; display: block; margin-bottom: 8px; font-weight: bold;">
+        👑 გუნდის კაპიტანი (ორმაგი ქულა):
+    </label>
+    <select id="captain-select" name="captain_id" required style="width: 100%; padding: 12px; background: #0b0b0b; border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; cursor: pointer;">
+        <option value="">-- ჯერ აირჩიეთ 11 მოთამაშე --</option>
+    </select>
+</div>
             <button type="button" id="transfer-btn" class="btn-save-sidebar" style="background: #3498db; margin-bottom: 10px;" onclick="toggleTransferMode()">
                 ტრანსფერები
             </button>
@@ -597,6 +605,7 @@ body {
 </div>
 
 <script>
+    let savedCaptainId = "{{ captain_id or '' }}";
     // 1. მონაცემების მომზადება
     const savedPlayerIds = {{ saved_players | tojson | safe }} || []; 
     const allPlayers = JSON.parse('{{ players_json | safe }}' || '[]');
@@ -809,6 +818,20 @@ body {
         saveBtn.disabled = selectedPlayers.length !== 11;
         // ღილაკს მხოლოდ ვთიშავთ, არ ვმალავთ, რომ დიზაინი არ აირიოს
         saveBtn.style.opacity = (selectedPlayers.length === 11) ? '1' : '0.5';
+
+        // === კაპიტნის სელექთის დინამიური განახლება ===
+        const captainSelect = document.getElementById('captain-select');
+        const currentlySelectedCaptain = captainSelect.value || savedCaptainId;
+        
+        if (selectedPlayers.length === 11) {
+            captainSelect.innerHTML = '<option value="">-- აირჩიე კაპიტანი --</option>';
+            selectedPlayers.forEach(p => {
+                const isSelected = (p.id == currentlySelectedCaptain) ? 'selected' : '';
+                captainSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${p.name} (${p.position})</option>`;
+            });
+        } else {
+            captainSelect.innerHTML = '<option value="">-- ჯერ აირჩიეთ 11 მოთამაშე --</option>';
+        }
     }
 
     function toggleTransferMode() {
