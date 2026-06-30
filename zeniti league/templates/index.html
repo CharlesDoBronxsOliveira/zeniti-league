@@ -7,75 +7,6 @@
     <meta name="description" content="ზენითი ლიგა - საუკეთესო საფეხბურთო გამოცდილება. თვალი ადევნეთ ტურნირს.">
     <meta name="keywords" content="ფეხბურთი, ზენითი ლიგა, ტურნირი, ქობულეთი">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
-    <style>
-        @media (max-width: 850px) {
-            /* ჰედერის და მენიუს მორგება */
-            header {
-                flex-direction: column;
-                padding: 15px;
-                text-align: center;
-                gap: 15px;
-                height: auto;
-            }
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 15px;
-                padding: 0;
-            }
-            .auth-section {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-                margin-top: 10px;
-            }
-
-            /* ტექსტების და ტაიმერის დაპატარავება */
-            .hero-content h1 {
-                font-size: 2.2rem;
-            }
-            #countdown-container {
-                width: 95%;
-                padding: 15px;
-            }
-            #timer {
-                font-size: 1.2rem;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 5px;
-            }
-
-            /* ცხრილები (მარჯვნივ გასასქროლად რომ არ გააფუჭოს ეკრანი) */
-            .table-wrapper, .scorer-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                width: 100%;
-                border-radius: 10px;
-            }
-            table {
-                min-width: 600px; /* ცხრილი არ მოიჭმუჭნოს მობილურზე */
-            }
-
-            /* თამაშების და გუნდების ბარათები */
-            .matches-grid, .zn-team-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-            }
-            .match-card, .zn-card, .zn-card-link {
-                width: 100%;
-                max-width: 350px;
-            }
-
-            /* CTA ბანერი */
-            .cta-content h2 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -114,6 +45,7 @@
     </div>
 </header>
 
+    <!-- HERO სექცია ტაიმერით -->
     <section class="hero">
         <div class="hero-content">
     <h1>ეს არის ზენითი ლიგა!</h1>
@@ -135,6 +67,7 @@
         </div>
     </section>
 
+    <!-- სატურნირო ცხრილები (A და B ჯგუფი) -->
     <section id="standings" class="container">
         <h2>A ჯგუფი</h2>
         <div class="table-wrapper">
@@ -151,6 +84,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
                     <tr class="active-row">
                         <td>1</td>
                         <td class="team-info">
@@ -163,8 +97,7 @@
                         <td>0</td>
                         <td class="diff positive">0</td>
                     </tr>  
-                    <tr>
-                        <td>2</td>
+                    <td>2</td>
                         <td class="team-info">
                             <img src="{{ url_for('static', filename='images/jikhanjuri.png') }}" class="team-logo" alt="Batumi">
                             <span>ჯიხანჯური / Jikhanjuri</span>
@@ -175,8 +108,7 @@
                         <td>0</td>
                         <td class="diff positive">0</td>
                     </tr>
-                    <tr>
-                         <td>3</td>
+                     <td>3</td>
                         <td class="team-info">
                             <img src="{{ url_for('static', filename='images/la_legends.png') }}" class="team-logo" alt="la_legends">
                             <span>La Legends / ლეგენდები</span>
@@ -254,8 +186,7 @@
                         <td>0</td>
                         <td class="diff positive">0</td>
                     </tr>
-                    <tr>
-                        <td>4</td>
+                     <td>4</td>
                         <td class="team-info">
                             <img src="{{ url_for('static', filename='images/atchqvistavi.png') }}" class="team-logo" alt="atchqvistavi">
                             <span>აჭყვისთავი / Atchkvistavi</span>
@@ -271,6 +202,7 @@
         </div>
     </section>
 
+    <!-- მომავალი თამაშები -->
     <section id="matches" class="container">
         <h2>უკანასკნელი თამაშები</h2>
         <div class="matches-grid">
@@ -308,6 +240,9 @@
         </div>
     </section>
 
+    
+
+    <!-- ბომბარდირები (ბოლოში, როგორც გინდოდა) -->
     <section id="top-scorers" class="container">
     <h2>ბომბარდირები</h2>
     <div class="scorer-wrapper"> 
@@ -353,6 +288,8 @@
         </div>
     </section>
 
+    </table> 
+
 <h2 style="text-align: center; margin-top: 40px; color: white;">🛡️ ფინალისტი გუნდები</h2>
 
 <div class="zn-team-container">
@@ -375,7 +312,7 @@
         <div class="zn-card">
             <div class="zn-header" style="background: linear-gradient(135deg, #ff4b2b, #ff416c);"></div>
             <div class="zn-logo-wrap">
-                <img src="{{ url_for('static', filename='images/jikhanjuri.png') }}" class="zn-logo" alt="jikhanjuri">
+                <img src="{{ url_for('static', filename='images/jikhanjuri.png') }}"" class="zn-logo" alt="jikhanjuri">
             </div>
             <div class="zn-info">
                 <h3 class="zn-name">ჯიხანჯური</h3>
@@ -386,6 +323,7 @@
     </a>
 
 </div>
+<footer ...> </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
