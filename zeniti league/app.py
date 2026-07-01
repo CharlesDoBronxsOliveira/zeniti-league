@@ -6,6 +6,8 @@ from psycopg2.extras import DictCursor
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
+import random
+import string
 
 app = Flask(__name__)
 app.secret_key = 'zeniti_secret_key_2026'
@@ -432,24 +434,35 @@ def delete_account():
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
 # ==========================================
 
+# ==========================================
+# 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
+# ==========================================
 @app.route('/leaderboard')
 def leaderboard():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # ამოგვაქვს id, username და team_name
     cur.execute('SELECT id, username, team_name FROM "Users"')
     all_users = cur.fetchall()
     
     cur.execute("SELECT * FROM players")
     all_players_raw = cur.fetchall()
-    
     players_pool = {p['id']: dict(p) for p in all_players_raw}
     
-    # 🟢 კაპიტნის სტატუსის წამოღება ბაზიდან
     cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
     all_selections = cur.fetchall()
-    
+
+    # 🟢 ახალი: მოგვაქვს მომხმარებლის პირადი ლიგები (თუ შესულია)
+    user_private_leagues = []
+    if 'user_id' in session:
+        cur.execute('''
+            SELECT pl.id, pl.name, pl.invite_code 
+            FROM private_leagues pl
+            JOIN user_private_leagues upl ON pl.id = upl.league_id
+            WHERE upl.user_id = %s
+        ''', (session['user_id'],))
+        user_private_leagues = cur.fetchall()
+
     cur.close()
     conn.close()
     
@@ -458,7 +471,6 @@ def leaderboard():
         uid = sel['user_id']
         if uid not in user_teams_map:
             user_teams_map[uid] = []
-        # ვინახავთ ობიექტს: მოთამაშის id + კაპიტნის სტატუსი
         user_teams_map[uid].append({
             'player_id': sel['player_id'],
             'is_captain': sel['is_captain']
@@ -475,25 +487,173 @@ def leaderboard():
         
         for item in u_team:
             pid = item['player_id']
-            is_cap = item['is_captain']
-            
             if pid in players_pool:
                 player_data = dict(players_pool[pid])
-                player_data['is_captain'] = is_cap # 👑 კაპიტნის გაორმაგება
+                player_data['is_captain'] = item['is_captain'] 
                 total_score += calculate_fantasy_points(player_data)
                 
         leaderboard_data.append({
-            'user_id': uid,       # 🟢 დამატებულია user_id სხვისი გუნდის სანახავად
+            'user_id': uid,
             'username': uname,
             'team_name': tname,
             'total_points': total_score,
             'team_size': len(u_team)
         })
         
-    # სორტირება ქულების მიხედვით
     leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
     
-    return render_template('leaderboard.html', leaderboard=leaderboard_data)
+    return render_template('leaderboard.html', 
+                           leaderboard=leaderboard_data,
+                           private_leagues=user_private_leagues)
+
+# ==========================================
+# 🏆 პირადი ლიგები (შექმნა და შეერთება)
+# ==========================================
+def generate_invite_code(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+@app.route('/create-league', methods=['POST'])
+def create_league():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    league_name = request.form.get('league_name', '').strip()
+    if not league_name:
+        flash('ლიგის სახელი ცარიელია!', 'error')
+        return redirect(url_for('leaderboard'))
+        
+    invite_code = generate_invite_code()
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute('INSERT INTO private_leagues (name, invite_code, creator_id) VALUES (%s, %s, %s) RETURNING id', 
+                    (league_name, invite_code, user_id))
+        league_id = cur.fetchone()['id']
+        
+        cur.execute('INSERT INTO user_private_leagues (user_id, league_id) VALUES (%s, %s)', 
+                    (user_id, league_id))
+        conn.commit()
+        flash(f'ლიგა შეიქმნა! მოსაწვევი კოდი: {invite_code}', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash('შეცდომა ლიგის შექმნისას.', 'error')
+    finally:
+        cur.close()
+        conn.close()
+        
+    return redirect(url_for('leaderboard'))
+
+@app.route('/join-league', methods=['POST'])
+def join_league():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    invite_code = request.form.get('invite_code', '').strip().upper()
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute('SELECT id, name FROM private_leagues WHERE invite_code = %s', (invite_code,))
+    league = cur.fetchone()
+    
+    if league:
+        league_id = league['id']
+        cur.execute('SELECT * FROM user_private_leagues WHERE user_id = %s AND league_id = %s', (user_id, league_id))
+        if cur.fetchone():
+            flash('თქვენ უკვე ხართ ამ ლიგაში!', 'info')
+        else:
+            cur.execute('INSERT INTO user_private_leagues (user_id, league_id) VALUES (%s, %s)', (user_id, league_id))
+            conn.commit()
+            flash(f'წარმატებით შეუერთდით ლიგას: {league["name"]}', 'success')
+    else:
+        flash('არასწორი კოდი. ლიგა ვერ მოიძებნა!', 'error')
+        
+    cur.close()
+    conn.close()
+    return redirect(url_for('leaderboard'))
+
+@app.route('/private-league/<int:league_id>')
+def private_league(league_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    user_id = session['user_id']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # ამოწმებს, აქვს თუ არა წვდომა ამ ლიგაზე
+    cur.execute('SELECT * FROM user_private_leagues WHERE user_id = %s AND league_id = %s', (user_id, league_id))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
+        flash('თქვენ არ გაქვთ წვდომა ამ ლიგაზე!', 'error')
+        return redirect(url_for('leaderboard'))
+        
+    cur.execute('SELECT name, invite_code FROM private_leagues WHERE id = %s', (league_id,))
+    league_info = cur.fetchone()
+    
+    # ამოგვაქვს მხოლოდ ამ ლიგის წევრები
+    cur.execute('''
+        SELECT u.id, u.username, u.team_name 
+        FROM "Users" u
+        JOIN user_private_leagues upl ON u.id = upl.user_id
+        WHERE upl.league_id = %s
+    ''', (league_id,))
+    league_users = cur.fetchall()
+    
+    cur.execute("SELECT * FROM players")
+    all_players_raw = cur.fetchall()
+    players_pool = {p['id']: dict(p) for p in all_players_raw}
+    
+    cur.execute("SELECT user_id, player_id, is_captain FROM user_teams")
+    all_selections = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    user_teams_map = {}
+    for sel in all_selections:
+        uid = sel['user_id']
+        if uid not in user_teams_map:
+            user_teams_map[uid] = []
+        user_teams_map[uid].append({
+            'player_id': sel['player_id'],
+            'is_captain': sel['is_captain']
+        })
+        
+    leaderboard_data = []
+    for u in league_users:
+        uid = u['id']
+        uname = u['username']
+        tname = u['team_name'] if u.get('team_name') else f"FC {uname}"
+        
+        u_team = user_teams_map.get(uid, [])
+        total_score = 0
+        
+        for item in u_team:
+            pid = item['player_id']
+            if pid in players_pool:
+                player_data = dict(players_pool[pid])
+                player_data['is_captain'] = item['is_captain']
+                total_score += calculate_fantasy_points(player_data)
+                
+        leaderboard_data.append({
+            'user_id': uid,
+            'username': uname,
+            'team_name': tname,
+            'total_points': total_score,
+            'team_size': len(u_team)
+        })
+        
+    leaderboard_data.sort(key=lambda x: x['total_points'], reverse=True)
+    
+    # აქ ვიყენებთ იგივე leaderboard.html შაბლონს, უბრალოდ სპეციფიკური ლიგის მონაცემებით
+    return render_template('leaderboard.html', 
+                           leaderboard=leaderboard_data,
+                           league_info=league_info)
 
 # ==========================================
 # 👀 სხვისი გუნდის ნახვა (View Team)
