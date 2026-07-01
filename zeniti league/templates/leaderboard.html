@@ -85,6 +85,7 @@
             align-items: center;
             width: 100%;
             box-sizing: border-box;
+            padding-bottom: 60px;
         }
 
         .table-container {
@@ -115,7 +116,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .leaderboard-table {
@@ -190,6 +191,18 @@
             color: #ccc;
             border: 1px solid rgba(255,255,255,0.1);
         }
+
+        /* მოდალური ფანჯრების (Modals) სტილები */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 20px; border: 1px solid rgba(46, 204, 113, 0.3); padding: 30px; position: relative; }
+        .modal-header { font-family: 'Inter', sans-serif; font-size: 1.2rem; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .close-modal { cursor: pointer; color: #888; font-size: 1.5rem; transition: 0.3s; }
+        .close-modal:hover { color: #ff4757; }
+        .form-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; margin-bottom: 15px; outline: none; box-sizing: border-box; transition: 0.3s; }
+        .form-input:focus { border-color: var(--zeniti-green); box-shadow: 0 0 10px rgba(46, 204, 113, 0.2); }
+        .btn-submit { width: 100%; padding: 12px; background: var(--zeniti-green); color: black; border: none; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4); filter: brightness(1.1); }
+
     </style>
 </head>
 <body>
@@ -205,9 +218,61 @@
 </header>
 
 <main class="content-area">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="width: 90%; max-width: 900px; margin-bottom: 20px;">
+                {% for category, message in messages %}
+                    <div style="padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-bottom: 10px; font-family: 'Inter', sans-serif;
+                        {% if category == 'error' %} background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; 
+                        {% elif category == 'info' %} background: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db;
+                        {% else %} background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <div class="table-container">
-        <h1 class="page-title">საერთო რეიტინგი</h1>
-        <div class="page-subtitle">მომხმარებელთა ლიდერბორდი ქულების მიხედვით</div>
+        
+        {% if league_info %}
+            <h1 class="page-title">🏆 {{ league_info.name }}</h1>
+            <div class="page-subtitle" style="color: #f1c40f; font-size: 1rem;">მოსაწვევი კოდი: <b style="letter-spacing: 2px;">{{ league_info.invite_code }}</b></div>
+            
+            <div style="text-align: center; margin-bottom: 25px;">
+                <a href="{{ url_for('leaderboard') }}" style="color: #3498db; text-decoration: none; font-weight: bold; padding: 8px 15px; background: rgba(52, 152, 219, 0.1); border-radius: 8px; border: 1px solid rgba(52, 152, 219, 0.3); transition: 0.3s;" onmouseover="this.style.background='rgba(52, 152, 219, 0.2)'" onmouseout="this.style.background='rgba(52, 152, 219, 0.1)'">
+                    ← საერთო რეიტინგში დაბრუნება
+                </a>
+            </div>
+        {% else %}
+            <h1 class="page-title">საერთო რეიტინგი</h1>
+            <div class="page-subtitle">მომხმარებელთა ლიდერბორდი ქულების მიხედვით</div>
+
+            {% if session.get('user_id') %}
+            <div style="width: 100%; background: rgba(0,0,0,0.4); border-radius: 15px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.05); box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: #fff; letter-spacing: 1px;">🛡️ ჩემი ლიგები</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="openModal('createLeagueModal')" style="background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;" onmouseover="this.style.background='rgba(46, 204, 113, 0.4)'" onmouseout="this.style.background='rgba(46, 204, 113, 0.2)'">➕ შექმნა</button>
+                        <button onclick="openModal('joinLeagueModal')" style="background: rgba(52, 152, 219, 0.2); border: 1px solid #3498db; color: #3498db; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;" onmouseover="this.style.background='rgba(52, 152, 219, 0.4)'" onmouseout="this.style.background='rgba(52, 152, 219, 0.2)'">🔗 შეერთება</button>
+                    </div>
+                </div>
+                
+                {% if private_leagues %}
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    {% for league in private_leagues %}
+                        <a href="{{ url_for('private_league', league_id=league.id) }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 10px; color: white; text-decoration: none; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.3s;" onmouseover="this.style.borderColor='#2ecc71'; this.style.background='rgba(46, 204, 113, 0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)'">
+                            🏆 {{ league.name }}
+                        </a>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="color: #888; font-size: 0.85rem; font-family: 'Inter', sans-serif;">თქვენ ჯერ არ ხართ არცერთ კერძო ლიგაში. შექმენით ახალი ან შეუერთდით მეგობრებს კოდით!</div>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
 
         <table class="leaderboard-table">
             <thead>
@@ -244,6 +309,50 @@
         </table>
     </div>
 </main>
+
+<div class="modal" id="createLeagueModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>➕ ახალი ლიგის შექმნა</span>
+            <span class="close-modal" onclick="closeModal('createLeagueModal')">&times;</span>
+        </div>
+        <form action="{{ url_for('create_league') }}" method="POST">
+            <input type="text" name="league_name" class="form-input" placeholder="ლიგის დასახელება..." required>
+            <button type="submit" class="btn-submit">შექმნა</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="joinLeagueModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span style="color: #3498db;">🔗 ლიგაში შეერთება</span>
+            <span class="close-modal" onclick="closeModal('joinLeagueModal')">&times;</span>
+        </div>
+        <form action="{{ url_for('join_league') }}" method="POST">
+            <input type="text" name="invite_code" class="form-input" placeholder="შეიყვანეთ მოსაწვევი კოდი..." required style="text-transform: uppercase; letter-spacing: 2px;">
+            <button type="submit" class="btn-submit" style="background: #3498db; color: white;">შეერთება</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // მარტივი JavaScript მოდელების გასახსნელად და დასახურად
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // ფანჯრის გარეთ დაწკაპუნებისას მოდალის დახურვა
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+</script>
 
 </body>
 </html>
