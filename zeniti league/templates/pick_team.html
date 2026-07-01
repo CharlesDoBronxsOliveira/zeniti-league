@@ -135,6 +135,55 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
+       /* ========================================= */
+        /* 👕 CSS ფორმები (Kits) გუნდებისთვის */
+        /* ========================================= */
+        
+        /* ბაზისური მაისურის ფორმა (V-neck) */
+        .css-kit {
+            width: 45px;
+            height: 50px;
+            position: relative;
+            clip-path: polygon(20% 0%, 35% 0%, 50% 15%, 65% 0%, 80% 0%, 100% 25%, 85% 40%, 75% 30%, 75% 100%, 25% 100%, 25% 30%, 15% 40%, 0% 25%);
+            margin-bottom: 2px;
+            background-color: #333; /* Default ფერი */
+        }
+
+        /* 3D ჩრდილი რეალისტურობისთვის */
+        .kit-shadow {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+        }
+
+        /* 1. ფენიქსი (შინდისფერი და პიტნისფერი სქელი ზოლები) */
+        .kit-phoenix { background: repeating-linear-gradient(to right, #4A1C26, #4A1C26 33%, #88C9B9 33%, #88C9B9 66%); }
+
+        /* 2. თეთროსანი (სამეფო ლურჯი და თეთრი ვერტიკალური ზოლები) */
+        .kit-tetrosani { background: repeating-linear-gradient(to right, #1E487B, #1E487B 10px, #FFFFFF 10px, #FFFFFF 20px); }
+
+        /* 3. ჯიხანჯური (მუქი მწვანე, ოქროსფერი დიაგონალური ხაზით) */
+        .kit-jikhanjuri { background: linear-gradient(135deg, #1A472A 0%, #1A472A 45%, #D4AF37 45%, #D4AF37 55%, #1A472A 55%, #1A472A 100%); }
+
+        /* 4. ლეგენდები / La Legends (მუქი ლურჯი, ოქროსფერი მკერდით) */
+        .kit-la-legends { background: linear-gradient(to bottom, #D4AF37 25%, #0A192F 25%); }
+
+        /* 5. ღელე (მუქი ლურჯი და ცისფერი შუაზე გაყოფილი - ჩანჩქერის ეფექტი) */
+        .kit-ghele { background: linear-gradient(to right, #122030 50%, #85C1E9 50%); }
+
+        /* 6. აჭყვისთავი (მუქი მწვანე, თეთრი ჰორიზონტალური ზოლით) */
+        .kit-atchqvistavi { background: linear-gradient(to bottom, #1D3B2B 35%, #FFFFFF 35%, #FFFFFF 55%, #1D3B2B 55%); }
+
+        /* 7. ლეღვა (ზურმუხტისფერი, ნარინჯისფერი და ლურჯი დეტალებით) */
+        .kit-leghva { background: repeating-linear-gradient(45deg, #2A5A3C, #2A5A3C 10px, #E67E22 10px, #E67E22 14px, #1B2A41 14px, #1B2A41 18px); }
+
+        /* 8. შახტიორი (მუქი ლურჯი და თეთრი წვრილი ზოლები) */
+        .kit-shakhtiori { background: repeating-linear-gradient(to right, #1C2D4D, #1C2D4D 8px, #FFFFFF 8px, #FFFFFF 16px); }
+
+        /* 9. სტანდარტული (თუ რომელიმე გუნდი აკლია) */
+        .kit-default { background: #555; }
+
         /* ========================================= */
         /* 📱 მობილურის ვერსია (RESPONSIVE დიზაინი) */
         /* ========================================= */
@@ -616,7 +665,7 @@
     }
 
     // დამხმარე ფუნქციები
-    function renderPlayerInSlot(player, slot) {
+   function renderPlayerInSlot(player, slot) {
         slot.setAttribute('data-player-id', player.id);
         slot.querySelector('.slot-empty').style.display = 'none';
         slot.querySelector('.slot-pos-label').style.display = 'none';
@@ -629,15 +678,38 @@
             ? `<div style="position:absolute; top:-8px; left:-8px; background:#f1c40f; color:black; font-weight:900; width:22px; height:22px; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; z-index:10; border:2px solid #1a1a1a; box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);">C</div>` 
             : '';
 
+        // 🟢 გუნდების ქართული სახელების დაკავშირება CSS ფორმებთან
+        const teamClassMap = {
+            'ფენიქსი': 'phoenix',
+            'თეთროსანი': 'tetrosani',
+            'ღელე': 'ghele',
+            'ლეღვა': 'leghva',
+            'la legends': 'la-legends',
+            'ჯიხანჯური': 'jikhanjuri',
+            'აჭყვისთავი': 'atchqvistavi',
+            'შახტიორი': 'shakhtiori'
+            // თუ კიდევ გაქვს გუნდი, მაგალითად 'წყავროკა', შეგიძლია აქ ჩაამატო
+        };
+        
+        // ვპოულობთ შესაბამის კლასს, თუ არადა ვიყენებთ default-ს
+        const safeTeamName = (player.real_team || '').toLowerCase().trim();
+        const kitClass = teamClassMap[safeTeamName] || 'default';
+
         const playerCardHtml = `
-            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease;">
+            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 ${capBadge}
                 <div class="remove-player-btn" onclick="removePlayer(event, '${player.id}', this)">×</div>
-                <div class="p-shirt-num" style="font-family:'Bebas Neue'; font-size:1.8rem; color:black; background:var(--zeniti-green); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 5px auto; border: 1px solid var(--zeniti-green);">
-                    ${player.shirt_number || '0'}
+                
+                <div class="css-kit kit-${kitClass}">
+                    <div class="kit-shadow"></div>
                 </div>
-                <div class="p-name" style="font-size:0.75rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white;">
+
+                <div class="p-name" style="font-size:0.7rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white; background: rgba(0,0,0,0.5); padding: 1px 4px; border-radius: 4px;">
                     ${player.name.split(' ')[0]} 
+                </div>
+                
+                <div class="p-pts" style="font-size: 0.6rem; color: #00ff87; font-weight: 900; background: rgba(0,0,0,0.6); border-radius: 4px; padding: 1px 4px; display: inline-block; margin-top: 2px;">
+                    ${player.total_points || 0} ქულა
                 </div>
             </div>
         `;
