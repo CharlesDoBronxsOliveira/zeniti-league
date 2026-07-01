@@ -391,6 +391,39 @@ def update_team_name():
         
     return redirect(url_for('pick_team'))
 
+# ==========================================
+# ❌ ანგარიშის წაშლა
+# ==========================================
+@app.route('/delete-account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # ჯერ ვშლით მომხმარებლის დამახსოვრებულ გუნდს
+        cur.execute('DELETE FROM user_teams WHERE user_id = %s', (user_id,))
+        
+        # შემდეგ ვშლით თავად მომხმარებლის ექაუნთს
+        cur.execute('DELETE FROM "Users" WHERE id = %s', (user_id,))
+        
+        conn.commit()
+        # ვასუფთავებთ სესიას (გამოგვყავს სისტემიდან)
+        session.clear()
+        flash('თქვენი ანგარიში და გუნდი სამუდამოდ წაიშალა.', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash('დაფიქსირდა შეცდომა ანგარიშის წაშლისას.', 'error')
+        print(f"შეცდომა წაშლისას: {e}")
+    finally:
+        cur.close()
+        conn.close()
+        
+    return redirect(url_for('home'))
 ## ==========================================
 # 📊 ლიდერბორდი (მომხმარებელთა რეიტინგი)
 # ==========================================
