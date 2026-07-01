@@ -14,54 +14,86 @@
             display: flex; flex-direction: column; align-items: center; padding-bottom: 50px;
         }
 
-        .header-banner {
-            margin-top: 40px; text-align: center;
-        }
-
-        .header-banner h1 {
-            color: #2ecc71; font-family: 'Bebas Neue', sans-serif; font-size: 3rem; margin: 0; letter-spacing: 2px;
-        }
-
+        .header-banner { margin-top: 40px; text-align: center; }
+        .header-banner h1 { color: #2ecc71; font-family: 'Bebas Neue', sans-serif; font-size: 3rem; margin: 0; letter-spacing: 2px; }
         .header-banner p { color: #aaa; margin-top: 5px; font-size: 1rem; }
 
         .pitch-container {
             width: 100%; max-width: 1000px; margin-top: 30px;
-            background: rgba(26, 71, 42, 0.85); /* მწვანე სტადიონის ფონი */
+            background: rgba(26, 71, 42, 0.85);
             border: 3px solid #2ecc71; border-radius: 20px;
             padding: 40px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
 
-        .pitch-line {
-            display: flex; justify-content: center; gap: 20px; margin-bottom: 30px;
-        }
+        .pitch-line { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
 
-        /* მოთამაშის მარტივი ბარათი */
         .read-only-card {
             background: rgba(0,0,0,0.6); border: 1px solid rgba(46, 204, 113, 0.4);
             border-radius: 12px; padding: 15px; width: 100px; text-align: center;
-            position: relative; transition: 0.3s;
+            position: relative; transition: 0.3s; display: flex; flex-direction: column; align-items: center;
         }
 
         .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
 
-        .p-shirt {
-            font-family: 'Bebas Neue'; font-size: 1.8rem; color: black; background: #2ecc71;
-            width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px auto;
+        /* ========================================= */
+        /* 👕 CSS ფორმები (Kits) გუნდებისთვის */
+        /* ========================================= */
+        .css-kit {
+            width: 45px; height: 50px; position: relative; margin-bottom: 8px;
+            clip-path: polygon(20% 0%, 35% 0%, 50% 15%, 65% 0%, 80% 0%, 100% 25%, 85% 40%, 75% 30%, 75% 100%, 25% 100%, 25% 30%, 15% 40%, 0% 25%);
+            background-color: #333;
         }
+        .kit-shadow {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+        }
+        .kit-phoenix { background: repeating-linear-gradient(to right, #4A1C26, #4A1C26 33%, #88C9B9 33%, #88C9B9 66%); }
+        .kit-tetrosani { background: repeating-linear-gradient(to right, #1E487B, #1E487B 10px, #FFFFFF 10px, #FFFFFF 20px); }
+        .kit-jikhanjuri { background: linear-gradient(135deg, #1A472A 0%, #1A472A 45%, #D4AF37 45%, #D4AF37 55%, #1A472A 55%, #1A472A 100%); }
+        .kit-la-legends { background: linear-gradient(to bottom, #D4AF37 25%, #0A192F 25%); }
+        .kit-ghele { background: linear-gradient(to right, #122030 50%, #85C1E9 50%); }
+        .kit-atchqvistavi { background: linear-gradient(to bottom, #1D3B2B 35%, #FFFFFF 35%, #FFFFFF 55%, #1D3B2B 55%); }
+        .kit-leghva { background: repeating-linear-gradient(45deg, #2A5A3C, #2A5A3C 10px, #E67E22 10px, #E67E22 14px, #1B2A41 14px, #1B2A41 18px); }
+        .kit-shakhtiori { background: repeating-linear-gradient(to right, #1C2D4D, #1C2D4D 8px, #FFFFFF 8px, #FFFFFF 16px); }
+        .kit-default { background: #555; }
 
-        .p-name { font-size: 0.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .p-pts { color: #00ff87; font-weight: 900; font-size: 0.9rem; margin-top: 5px; background: rgba(0,0,0,0.5); border-radius: 5px; padding: 2px; }
+        .p-name { font-size: 0.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .p-pts { color: #00ff87; font-weight: 900; font-size: 0.9rem; margin-top: 5px; background: rgba(0,0,0,0.5); border-radius: 5px; padding: 2px 6px; }
 
         .captain-badge {
             position: absolute; top: -10px; left: -10px; background: #f1c40f; color: black;
             font-weight: 900; width: 25px; height: 25px; border-radius: 50%; display: flex;
             align-items: center; justify-content: center; font-size: 14px; border: 2px solid #1a1a1a;
-            box-shadow: 0 0 10px rgba(241, 196, 15, 0.6);
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.6); z-index: 5;
         }
     </style>
 </head>
 <body>
+
+    <!-- 🟢 Jinja მაკრო - ავტომატურად უკავშირებს ბაზის სახელს CSS კლასს -->
+    {% set team_class_map = {
+        'ფენიქსი': 'phoenix',
+        'თეთროსანი': 'tetrosani',
+        'ღელე': 'ghele',
+        'ლეღვა': 'leghva',
+        'la legends': 'la-legends',
+        'ჯიხანჯური': 'jikhanjuri',
+        'აჭყვისთავი': 'atchqvistavi',
+        'შახტიორი': 'shakhtiori'
+    } %}
+
+    {% macro render_card(p) %}
+        {% set kit_class = team_class_map.get(p.real_team|lower|trim, 'default') %}
+        <div class="read-only-card">
+            {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
+            <div class="css-kit kit-{{ kit_class }}">
+                <div class="kit-shadow"></div>
+            </div>
+            <div class="p-name">{{ p.name.split(' ')[0] }}</div>
+            <div class="p-pts">{{ p.total_points }} PTS</div>
+        </div>
+    {% endmacro %}
 
     <div class="header-banner">
         <h1>{{ team_name }}</h1>
@@ -70,47 +102,31 @@
     </div>
 
     <div class="pitch-container">
+        <!-- თავდამსხმელები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'თავდამსხმელი' %}
-                <div class="read-only-card">
-                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
-                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
-                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
-                    <div class="p-pts">{{ p.total_points }} PTS</div>
-                </div>
+                {{ render_card(p) }}
             {% endfor %}
         </div>
 
+        <!-- ნახევარმცველები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'ნახევარმცველი' %}
-                <div class="read-only-card">
-                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
-                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
-                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
-                    <div class="p-pts">{{ p.total_points }} PTS</div>
-                </div>
+                {{ render_card(p) }}
             {% endfor %}
         </div>
 
+        <!-- მცველები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მცველი' %}
-                <div class="read-only-card">
-                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
-                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
-                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
-                    <div class="p-pts">{{ p.total_points }} PTS</div>
-                </div>
+                {{ render_card(p) }}
             {% endfor %}
         </div>
 
+        <!-- მეკარე -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მეკარე' %}
-                <div class="read-only-card">
-                    {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
-                    <div class="p-shirt">{{ p.shirt_number or '0' }}</div>
-                    <div class="p-name">{{ p.name.split(' ')[0] }}</div>
-                    <div class="p-pts">{{ p.total_points }} PTS</div>
-                </div>
+                {{ render_card(p) }}
             {% endfor %}
         </div>
     </div>
