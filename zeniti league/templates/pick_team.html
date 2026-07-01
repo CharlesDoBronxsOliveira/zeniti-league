@@ -135,55 +135,6 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-       /* ========================================= */
-        /* 👕 CSS ფორმები (Kits) გუნდებისთვის */
-        /* ========================================= */
-        
-        /* ბაზისური მაისურის ფორმა (V-neck) */
-        .css-kit {
-            width: 45px;
-            height: 50px;
-            position: relative;
-            clip-path: polygon(20% 0%, 35% 0%, 50% 15%, 65% 0%, 80% 0%, 100% 25%, 85% 40%, 75% 30%, 75% 100%, 25% 100%, 25% 30%, 15% 40%, 0% 25%);
-            margin-bottom: 2px;
-            background-color: #333; /* Default ფერი */
-        }
-
-        /* 3D ჩრდილი რეალისტურობისთვის */
-        .kit-shadow {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom right, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%);
-            pointer-events: none;
-        }
-
-        /* 1. ფენიქსი (შინდისფერი და პიტნისფერი სქელი ზოლები) */
-        .kit-phoenix { background: repeating-linear-gradient(to right, #4A1C26, #4A1C26 33%, #88C9B9 33%, #88C9B9 66%); }
-
-        /* 2. თეთროსანი (სამეფო ლურჯი და თეთრი ვერტიკალური ზოლები) */
-        .kit-tetrosani { background: repeating-linear-gradient(to right, #1E487B, #1E487B 10px, #FFFFFF 10px, #FFFFFF 20px); }
-
-        /* 3. ჯიხანჯური (მუქი მწვანე, ოქროსფერი დიაგონალური ხაზით) */
-        .kit-jikhanjuri { background: linear-gradient(135deg, #1A472A 0%, #1A472A 45%, #D4AF37 45%, #D4AF37 55%, #1A472A 55%, #1A472A 100%); }
-
-        /* 4. ლეგენდები / La Legends (მუქი ლურჯი, ოქროსფერი მკერდით) */
-        .kit-la-legends { background: linear-gradient(to bottom, #D4AF37 25%, #0A192F 25%); }
-
-        /* 5. ღელე (მუქი ლურჯი და ცისფერი შუაზე გაყოფილი - ჩანჩქერის ეფექტი) */
-        .kit-ghele { background: linear-gradient(to right, #122030 50%, #85C1E9 50%); }
-
-        /* 6. აჭყვისთავი (მუქი მწვანე, თეთრი ჰორიზონტალური ზოლით) */
-        .kit-atchqvistavi { background: linear-gradient(to bottom, #1D3B2B 35%, #FFFFFF 35%, #FFFFFF 55%, #1D3B2B 55%); }
-
-        /* 7. ლეღვა (ზურმუხტისფერი, ნარინჯისფერი და ლურჯი დეტალებით) */
-        .kit-leghva { background: repeating-linear-gradient(45deg, #2A5A3C, #2A5A3C 10px, #E67E22 10px, #E67E22 14px, #1B2A41 14px, #1B2A41 18px); }
-
-        /* 8. შახტიორი (მუქი ლურჯი და თეთრი წვრილი ზოლები) */
-        .kit-shakhtiori { background: repeating-linear-gradient(to right, #1C2D4D, #1C2D4D 8px, #FFFFFF 8px, #FFFFFF 16px); }
-
-        /* 9. სტანდარტული (თუ რომელიმე გუნდი აკლია) */
-        .kit-default { background: #555; }
-
         /* ========================================= */
         /* 📱 მობილურის ვერსია (RESPONSIVE დიზაინი) */
         /* ========================================= */
@@ -249,6 +200,7 @@
 </head>
 <body>
 
+<!-- 1. ჰედერი -->
 <header class="main-header">
     <div class="logo">
         ZENITI <span style="color:white; -webkit-text-fill-color: white;">LEAGUE</span>
@@ -305,9 +257,16 @@
                 გუნდის შენახვა
             </button>
         </form>
+
+        <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('⚠️ დარწმუნებული ხართ? თქვენი ანგარიში და გუნდი სამუდამოდ წაიშლება და ვეღარ აღადგენთ!');" style="margin-top: 15px;">
+            <button type="submit" class="btn-save-sidebar" style="background: transparent; color: #ff4757; border: 1px solid #ff4757; box-shadow: none;">
+                ❌ ანგარიშის წაშლა
+            </button>
+        </form>
     </aside>
 
-    <main class="content-area">
+    <!-- 3. სტადიონის არეა -->
+   <main class="content-area">
         
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -333,61 +292,6 @@
         <div style="color: #555; font-size: 0.8rem; text-transform: uppercase; margin-top: 5px;">სასტარტო შემადგენლობა</div>
     </div>
 
-   <div class="modal" id="rulesModal">
-        <div class="modal-content" style="max-width: 600px; line-height: 1.6; background: #1a1a1a; padding: 25px; border: 1px solid rgba(46, 204, 113, 0.3);">
-            <div class="modal-header" style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
-                <span style="font-size: 1.3rem; color: var(--zeniti-green); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">📜 თამაშის წესები და ქულები</span>
-                <span class="close-modal" onclick="closeRulesModal()" style="font-size: 1.8rem;">&times;</span>
-            </div>
-            
-            <div style="color: #ddd; font-size: 0.85rem; font-family: 'Inter', sans-serif; overflow-y: auto; max-height: 60vh; padding-right: 10px;">
-                
-                <h3 style="color: #f1c40f; margin-bottom: 10px; font-size: 1rem;">⚙️ ძირითადი წესები</h3>
-                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
-                    <li><b>💰 ბიუჯეტი:</b> გუნდის ასაწყობად გაქვთ <b>100M</b>.</li>
-                    <li><b>🛡️ ლიმიტი:</b> ერთი გუნდიდან მაქსიმუმ <b>3 მოთამაშე</b>.</li>
-                    <li><b>🔄 ტრანსფერები:</b> ყოველ ტურში გაქვთ <b>3 ტრანსფერის</b> უფლება.</li>
-                    <li><b>👑 კაპიტანი:</b> კაპიტნის მიერ მოპოვებული <b>ქულები ორმაგდება!</b></li>
-                </ul>
-
-                <h3 style="color: #3498db; margin-bottom: 10px; font-size: 1rem;">⚽ შეტევა და პასები</h3>
-                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
-                    <li><b>გოლი (თავდამსხმელი):</b> +5 ქულა</li>
-                    <li><b>გოლი (ნახევარმცველი):</b> +6 ქულა</li>
-                    <li><b>გოლი (მცველი):</b> +7 ქულა</li>
-                    <li><b>გოლი (მეკარე):</b> +8 ქულა</li>
-                    <li><b>გოლი საჯარიმოს გარედან:</b> +1 ბონუს ქულა</li>
-                    <li><b>გოლი საკუთარი ნახევრიდან:</b> +3 ბონუს ქულა</li>
-                    <li><b>საგოლე პასი (ასისტი):</b> +4 ქულა</li>
-                </ul>
-
-                <h3 style="color: #e67e22; margin-bottom: 10px; font-size: 1rem;">🛡️ დაცვა და მატჩში მონაწილეობა</h3>
-                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
-                    <li><b>თამაშში მონაწილეობა:</b> +1 ქულა</li>
-                    <li><b>მეორე ტაიმში თამაში:</b> +1 ქულა</li>
-                    <li><b>გუნდის გამარჯვება:</b> +3 ქულა</li>
-                    <li><b>მშრალი მატჩი (მეკარე):</b> +8 ქულა</li>
-                    <li><b>მშრალი მატჩი (მცველი):</b> +6 ქულა</li>
-                    <li><b>ყოველ 4 სეივზე (მეკარე):</b> +1 ქულა</li>
-                </ul>
-
-                <h3 style="color: #e74c3c; margin-bottom: 10px; font-size: 1rem;">⚠️ ჯარიმები და მინუსები</h3>
-                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 5px;">
-                    <li><b>ყვითელი ბარათი:</b> -2 ქულა</li>
-                    <li><b>წითელი ბარათი:</b> -4 ქულა</li>
-                    <li><b>ავტოგოლი:</b> -4 ქულა</li>
-                    <li><b>პენალტის აღება (მეკარე):</b> +6 ქულა</li>
-                    <li><b>პენალტის მოპოვება:</b> +3 ქულა</li>
-                    <li><b>პენალტის აკიდება:</b> -3 ქულა</li>
-                    <li style="color: #ff6b81;"><b>გაშვებული გოლები (მეკარე):</b> მე-4 გოლიდან, ყოველ 2 გაშვებულ გოლზე -2 ქულა</li>
-                    <li style="color: #ff6b81;"><b>გაშვებული გოლები (მცველი):</b> ყოველ 3 გაშვებულ გოლზე -1 ქულა</li>
-                </ul>
-            </div>
-            
-            <button onclick="closeRulesModal()" class="btn-save-sidebar" style="margin-top: 20px; background: var(--zeniti-green); color: black;">გასაგებია</button>
-        </div>
-    </div>
-
     <div class="modal" id="nameModal">
         <div class="modal-content" style="max-width: 400px; text-align: center; height: auto;">
             <div class="modal-header" style="justify-content: center; position: relative;">
@@ -403,20 +307,24 @@
         
 
         <div class="pitch">
+            <!-- მეკარე -->
             <div class="player-slot gk" onclick="handleSlotClick('მეკარე', this)">
                 <div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
                 <div class="slot-pos-label">GK</div>
             </div>
 
+            <!-- მცველები -->
             <div class="player-slot def-1" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
             <div class="player-slot def-2" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
             <div class="player-slot def-3" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
             <div class="player-slot def-4" onclick="handleSlotClick('მცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">DEF</div></div>
 
+            <!-- ნახევარმცველები -->
             <div class="player-slot mid-1" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
             <div class="player-slot mid-2" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
             <div class="player-slot mid-3" onclick="handleSlotClick('ნახევარმცველი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">MID</div></div>
 
+            <!-- თავდამსხმელები -->
             <div class="player-slot fwd-1" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
             <div class="player-slot fwd-2" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
             <div class="player-slot fwd-3" onclick="handleSlotClick('თავდამსხმელი', this)"><div class="slot-empty"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="slot-pos-label">FWD</div></div>
@@ -424,6 +332,7 @@
     </main>
 </div>
 
+<!-- მოდალური ფანჯარა -->
 <div class="modal" id="playerModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -459,7 +368,6 @@
 
     const modal = document.getElementById('playerModal');
     const captainModal = document.getElementById('captainModal');
-    const rulesModal = document.getElementById('rulesModal');
 
     // 2. გვერდის ჩატვირთვა და გუნდის აღდგენა
     window.onload = function() {
@@ -487,13 +395,15 @@
         updateUI();
     };
 
-    // 3. სლოტზე დაჭერის ლოგიკა
+    // 3. სლოტზე დაჭერის ლოგიკა (გასწორებული!)
     function handleSlotClick(position, slotElement) {
         const playerId = slotElement.getAttribute('data-player-id');
         
         if (playerId) {
+            // თუ სლოტში უკვე დგას ფეხბურთელი, ყოველთვის იხსნება მისი სტატისტიკა (და კაპიტნის ღილაკი)
             showPlayerStats(playerId);
         } else if (isTransferMode) {
+            // თუ ცარიელია და ტრანსფერები ჩართულია, იხსნება მოთამაშეების სია
             openPlayerPicker(position, slotElement);
         } else {
             alert("ფეხბურთელის დასამატებლად ჯერ ჩართეთ 'ტრანსფერები' 🔄");
@@ -501,6 +411,8 @@
     }
 
     // 4. მოთამაშის არჩევა (მოდალში)
+    // 4. მოთამაშის არჩევა (მოდალში) - 3 მოთამაშის ლიმიტით
+    // 4. მოთამაშის არჩევა (მოდალში) - 3 მოთამაშის ლიმიტით
     function openPlayerPicker(position, slotElement) {
         activeSlot = slotElement; 
         modal.style.display = 'flex';
@@ -517,26 +429,32 @@
             const playerRow = document.createElement('div');
             playerRow.className = 'modal-player-row';
             
+            // 🟢 აქ ხდება შემოწმება დაწკაპუნებისას!
             playerRow.onclick = () => {
+                // შემოწმება 1: ბიუჯეტი
                 if (currentBudget - player.price < 0) {
                     alert("❌ ბიუჯეტი არ გყოფნით!");
                     return;
                 }
 
+                // შემოწმება 2: მაქსიმუმ 3 ფეხბურთელი ერთი გუნდიდან
                 const oldId = activeSlot.getAttribute('data-player-id');
                 let teamCount = 0;
                 
                 selectedPlayers.forEach(p => {
+                    // თუ ვინმეს ვანაცვლებთ (ვცვლით), იმ ძველ ფეხბურთელს არ ვითვლით, რადგან ის გუნდიდან ამოდის
                     if (p.id != oldId && p.real_team === player.real_team) {
                         teamCount++;
                     }
                 });
 
+                // თუ უკვე 3 ყავს, 4-ეს ვეღარ აირჩევს და პატარა ფანჯარა გამოხტება
                 if (teamCount >= 3) {
                     alert(`❌ წესი დაირღვა: ერთი გუნდიდან (${player.real_team}) შეგიძლიათ მაქსიმუმ 3 მოთამაშის აყვანა!`);
-                    return; 
+                    return; // აქ ვბლოკავთ - ფუნქცია წყდება და მოედანზე აღარ სვამს
                 }
 
+                // თუ ორივე წესი დაცულია, ვაგრძელებთ ჩასმას
                 selectPlayerForSlot(player);
             };
 
@@ -632,6 +550,7 @@
         closeCaptainModal();
     }
 
+    // კაპიტნის ახალი ფანჯრის ლოგიკა 
     function openCaptainPicker() {
         const listContainer = document.getElementById('captainPlayerList');
         listContainer.innerHTML = '';
@@ -655,17 +574,8 @@
         captainModal.style.display = 'none';
     }
 
-    // წესების მოდალის ფუნქციები
-    function openRulesModal() {
-        rulesModal.style.display = 'flex';
-    }
-
-    function closeRulesModal() {
-        rulesModal.style.display = 'none';
-    }
-
     // დამხმარე ფუნქციები
-   function renderPlayerInSlot(player, slot) {
+    function renderPlayerInSlot(player, slot) {
         slot.setAttribute('data-player-id', player.id);
         slot.querySelector('.slot-empty').style.display = 'none';
         slot.querySelector('.slot-pos-label').style.display = 'none';
@@ -678,38 +588,15 @@
             ? `<div style="position:absolute; top:-8px; left:-8px; background:#f1c40f; color:black; font-weight:900; width:22px; height:22px; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; z-index:10; border:2px solid #1a1a1a; box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);">C</div>` 
             : '';
 
-        // 🟢 გუნდების ქართული სახელების დაკავშირება CSS ფორმებთან
-        const teamClassMap = {
-            'ფენიქსი': 'phoenix',
-            'თეთროსანი': 'tetrosani',
-            'ღელე': 'ghele',
-            'ლეღვა': 'leghva',
-            'la legends': 'la-legends',
-            'ჯიხანჯური': 'jikhanjuri',
-            'აჭყვისთავი': 'atchqvistavi',
-            'შახტიორი': 'shakhtiori'
-            // თუ კიდევ გაქვს გუნდი, მაგალითად 'წყავროკა', შეგიძლია აქ ჩაამატო
-        };
-        
-        // ვპოულობთ შესაბამის კლასს, თუ არადა ვიყენებთ default-ს
-        const safeTeamName = (player.real_team || '').toLowerCase().trim();
-        const kitClass = teamClassMap[safeTeamName] || 'default';
-
         const playerCardHtml = `
-            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div class="filled-player-visual" style="text-align:center; position:relative; animation: fadeIn 0.3s ease;">
                 ${capBadge}
                 <div class="remove-player-btn" onclick="removePlayer(event, '${player.id}', this)">×</div>
-                
-                <div class="css-kit kit-${kitClass}">
-                    <div class="kit-shadow"></div>
+                <div class="p-shirt-num" style="font-family:'Bebas Neue'; font-size:1.8rem; color:black; background:var(--zeniti-green); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 5px auto; border: 1px solid var(--zeniti-green);">
+                    ${player.shirt_number || '0'}
                 </div>
-
-                <div class="p-name" style="font-size:0.7rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white; background: rgba(0,0,0,0.5); padding: 1px 4px; border-radius: 4px;">
+                <div class="p-name" style="font-size:0.75rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px; color: white;">
                     ${player.name.split(' ')[0]} 
-                </div>
-                
-                <div class="p-pts" style="font-size: 0.6rem; color: #00ff87; font-weight: 900; background: rgba(0,0,0,0.6); border-radius: 4px; padding: 1px 4px; display: inline-block; margin-top: 2px;">
-                    ${player.total_points || 0} ქულა
                 </div>
             </div>
         `;
@@ -759,6 +646,7 @@
         saveBtn.disabled = !canSave;
         saveBtn.style.opacity = canSave ? '1' : '0.5';
 
+        // 🟢 აქ ემატება ახალი გრაფა (ღილაკი) კაპიტნის ასარჩევად მარცხენა პანელში
         const statusText = document.getElementById('status-text');
         if (statusText) {
             if (selectedPlayers.length === 11 && (!currentCaptainId || currentCaptainId === "")) {
