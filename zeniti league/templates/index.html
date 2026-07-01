@@ -37,6 +37,13 @@
         {% if session.get('username') %}
             <a href="{{ url_for('pick_team') }}" class="my-team-btn">⚽ ჩემი გუნდი</a>
             <a href="{{ url_for('logout') }}" class="logout-link">გასვლა (<span>{{ session['username'] }}</span>)</a>
+            
+            <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('⚠️ ნამდვილად გსურთ ანგარიშის სამუდამოდ წაშლა? გუნდი და მონაცემები ვეღარ აღდგება!');" style="display: inline-flex; align-items: center; margin-left: 15px;">
+                <button type="submit" style="background: none; border: none; color: rgba(255, 71, 87, 0.6); font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 0; transition: 0.3s; font-family: 'Inter', sans-serif;" onmouseover="this.style.color='#ff4757'" onmouseout="this.style.color='rgba(255, 71, 87, 0.6)'">
+                    ანგარიშის წაშლა
+                </button>
+            </form>
+            
         {% else %}
             <a href="{{ url_for('login') }}">შესვლა</a>
             <a href="{{ url_for('register') }}" class="reg-btn">რეგისტრაცია</a>
