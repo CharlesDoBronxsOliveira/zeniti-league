@@ -67,7 +67,7 @@
             box-shadow: 0 0 10px rgba(241, 196, 15, 0.6); z-index: 5;
         }
 
-        /* მოდალური ფანჯრის სტილები (სქროლის მხარდაჭერით) */
+        /* მოდალური ფანჯრის სტილები */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1a1a1a; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; border-radius: 20px; border: 1px solid rgba(46, 204, 113, 0.3); padding: 25px; position: relative; text-align: center; }
         .modal-content::-webkit-scrollbar { display: none; }
@@ -82,30 +82,16 @@
             .header-banner h1 { font-size: 2.2rem; }
             .header-banner p { font-size: 0.85rem; }
             
-            .pitch-container { 
-                padding: 25px 5px; 
-                margin-top: 15px; 
-                border-width: 2px; 
-                border-radius: 15px; 
-            }
+            .pitch-container { padding: 25px 5px; margin-top: 15px; border-width: 2px; border-radius: 15px; }
             .pitch-line { gap: 6px; margin-bottom: 20px; }
             
-            .read-only-card { 
-                width: 60px; 
-                padding: 10px 4px; 
-                border-radius: 8px; 
-            }
+            .read-only-card { width: 60px; padding: 10px 4px; border-radius: 8px; }
             .css-kit { width: 32px; height: 38px; margin-bottom: 5px; }
             .p-name { font-size: 0.65rem; }
             .p-pts { font-size: 0.75rem; padding: 2px 4px; }
             
-            .captain-badge { 
-                width: 20px; height: 20px; 
-                font-size: 11px; 
-                top: -8px; left: -8px; 
-            }
+            .captain-badge { width: 20px; height: 20px; font-size: 11px; top: -8px; left: -8px; }
             
-            /* მოდალურის ფანჯრის მორგება მობილურზე */
             .modal-content { padding: 20px 15px; }
             #modalPlayerName { font-size: 1.5rem !important; }
             #modalPlayerPts { font-size: 2.2rem !important; }
@@ -113,7 +99,6 @@
         }
 
         @media (max-width: 400px) {
-            /* ძალიან პატარა ეკრანებისთვის შევიწროება */
             .read-only-card { width: 55px; padding: 8px 2px; }
             .css-kit { width: 28px; height: 32px; }
             .pitch-line { gap: 4px; }
@@ -136,6 +121,18 @@
     {% macro render_card(p) %}
         {% set kit_class = team_class_map.get(p.real_team|lower|trim, 'default') %}
         
+        {% set played_m = p.played_match_count if p.played_match_count is not none else (p.played_match if p.played_match is not none else 0) %}
+        {% set played_m_val = 1 if played_m == True else (0 if played_m == False else played_m) %}
+        
+        {% set played_sh = p.played_second_half_count if p.played_second_half_count is not none else (p.played_second_half if p.played_second_half is not none else 0) %}
+        {% set played_sh_val = 1 if played_sh == True else (0 if played_sh == False else played_sh) %}
+        
+        {% set team_w = p.team_won_count if p.team_won_count is not none else (p.team_won if p.team_won is not none else 0) %}
+        {% set team_w_val = 1 if team_w == True else (0 if team_w == False else team_w) %}
+        
+        {% set cs = p.clean_sheet_count if p.clean_sheet_count is not none else (p.clean_sheet if p.clean_sheet is not none else 0) %}
+        {% set cs_val = 1 if cs == True else (0 if cs == False else cs) %}
+
         <div class="read-only-card" 
              onclick="openDetailedStatsModal(this)"
              data-name="{{ p.name }}"
@@ -146,7 +143,6 @@
              data-goal="{{ p.goal or 0 }}"
              data-assist="{{ p.assist or 0 }}"
              data-saves="{{ p.saves or 0 }}"
-             data-cleansheet="{{ p.clean_sheet_count or p.clean_sheet or 0 }}"
              data-yellow="{{ p.yellow_card or 0 }}"
              data-red="{{ p.red_card or 0 }}"
              data-ga="{{ p.goals_against or 0 }}"
@@ -155,7 +151,11 @@
              data-pensaved="{{ p.penalty_saved or 0 }}"
              data-penwon="{{ p.penalty_won or 0 }}"
              data-outbox="{{ p.outside_box_goals or 0 }}"
-             data-ownhalf="{{ p.own_half_goals or 0 }}">
+             data-ownhalf="{{ p.own_half_goals or 0 }}"
+             data-playedm="{{ played_m_val }}"
+             data-playedsh="{{ played_sh_val }}"
+             data-teamw="{{ team_w_val }}"
+             data-cs="{{ cs_val }}">
              
             {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
             <div class="css-kit kit-{{ kit_class }}">
@@ -178,19 +178,16 @@
                 {{ render_card(p) }}
             {% endfor %}
         </div>
-
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'ნახევარმცველი' %}
                 {{ render_card(p) }}
             {% endfor %}
         </div>
-
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მცველი' %}
                 {{ render_card(p) }}
             {% endfor %}
         </div>
-
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მეკარე' %}
                 {{ render_card(p) }}
@@ -216,7 +213,7 @@
                     <div id="stat1Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
                 </div>
                 <div style="background: #111; padding: 15px 5px; border-radius: 12px; border: 1px solid #333;">
-                    <span id="stat2Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">პასი</span>
+                    <span id="stat2Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">ასისტი</span>
                     <div id="stat2Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
                 </div>
                 <div style="background: rgba(46, 204, 113, 0.1); padding: 15px 5px; border-radius: 12px; border: 1px solid #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.1);">
@@ -225,10 +222,13 @@
                 </div>
             </div>
 
-            <div style="margin-top: 25px; text-align: left; background: rgba(0,0,0,0.3); border: 1px solid #222; border-radius: 12px; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 10px;">დეტალური სტატისტიკა</div>
-                <div id="detailedStatsList" style="display: flex; flex-direction: column; gap: 5px;">
-                    </div>
+            <div id="accordionToggle" onclick="toggleAccordion()" style="margin-top: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                <span style="font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: bold; color: white;">📊 დეტალური სტატისტიკა</span>
+                <span id="accordionIcon" style="transition: 0.3s; color: #888;">▼</span>
+            </div>
+
+            <div id="detailedStatsContainer" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-top: none; border-radius: 0 0 12px 12px; padding: 15px; margin-top: -5px; text-align: left;">
+                <div id="detailedStatsList" style="display: flex; flex-direction: column; gap: 5px;"></div>
             </div>
             
             <button onclick="closeStatsModal()" style="width: 100%; margin-top: 20px; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-family: 'Inter', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#444'" onmouseout="this.style.background='#333'">
@@ -239,23 +239,19 @@
 
     <script>
         function openDetailedStatsModal(el) {
-            const name = el.getAttribute('data-name');
-            const team = el.getAttribute('data-team');
             const pos = el.getAttribute('data-pos').trim();
             const isGk = (pos === 'მეკარე');
             
-            // მთავარი ინფორმაციის ჩასმა
-            document.getElementById('modalPlayerName').innerText = name;
-            document.getElementById('modalPlayerInfo').innerText = team + " | " + pos;
+            document.getElementById('modalPlayerName').innerText = el.getAttribute('data-name');
+            document.getElementById('modalPlayerInfo').innerText = el.getAttribute('data-team') + " | " + pos;
             document.getElementById('modalPlayerPts').innerText = el.getAttribute('data-pts');
             document.getElementById('modalPlayerPrice').innerText = el.getAttribute('data-price') + "M";
             
-            // ტოპ 3 ყუთის ლოგიკა
             if (isGk) {
                 document.getElementById('stat1Label').innerText = 'სეივი';
                 document.getElementById('stat2Label').innerText = 'მშრალი';
                 document.getElementById('stat1Value').innerText = el.getAttribute('data-saves');
-                document.getElementById('stat2Value').innerText = el.getAttribute('data-cleansheet');
+                document.getElementById('stat2Value').innerText = el.getAttribute('data-cs');
             } else {
                 document.getElementById('stat1Label').innerText = 'გოლი';
                 document.getElementById('stat2Label').innerText = 'პასი';
@@ -264,53 +260,61 @@
             }
 
             // 🟢 დეტალური სტატისტიკის გენერატორი ფუნქცია
-            const buildStatRow = (label, valueStr, isNegative) => {
-                let val = parseInt(valueStr) || 0;
-                // თუ მნიშვნელობა 0-ზე მეტია, შესაბამისი ფერით ვანთებთ
-                let color = val > 0 ? (isNegative ? '#ff4757' : '#2ecc71') : '#888';
-                let weight = val > 0 ? 'bold' : 'normal';
-                
-                return `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px 0; font-family: 'Inter', sans-serif;">
-                        <span style="color:#aaa; font-size: 0.85rem;">${label}</span>
-                        <span style="color:${color}; font-weight:${weight}; font-size: 0.95rem;">${val}</span>
-                    </div>
-                `;
+            let detailsHtml = "";
+            const addRow = (label, val, isNegative, forceShow = false) => {
+                let v = parseInt(val) || 0;
+                if (v > 0 || forceShow) {
+                    let color = v > 0 ? (isNegative ? '#ff4757' : '#2ecc71') : '#888';
+                    detailsHtml += `
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px 0; font-family: 'Inter', sans-serif;">
+                            <span style="color:#aaa; font-size: 0.85rem;">${label}</span>
+                            <span style="color:${color}; font-weight:bold; font-size: 0.95rem;">${v}</span>
+                        </div>
+                    `;
+                }
             };
 
-            let detailsHtml = "";
+            // ძირითადი სტატისტიკა ყოველთვის ჩანს (forceShow = true)
+            addRow("თამაშში მონაწილეობა", el.getAttribute('data-playedm'), false, true);
+            addRow("გუნდის გამარჯვება", el.getAttribute('data-teamw'), false, true);
+            addRow("ყვითელი ბარათი", el.getAttribute('data-yellow'), true, true);
+            addRow("წითელი ბარათი", el.getAttribute('data-red'), true, true);
             
-            // საბაზისო მონაცემები (ყოველთვის ჩანს)
-            detailsHtml += buildStatRow("ყვითელი ბარათი", el.getAttribute('data-yellow'), true);
-            detailsHtml += buildStatRow("წითელი ბარათი", el.getAttribute('data-red'), true);
-            
-            // გაშვებული გოლი ჩანს მხოლოდ მეკარეზე და მცველზე
             if (pos === 'მეკარე' || pos === 'მცველი') {
-                detailsHtml += buildStatRow("გაშვებული გოლი", el.getAttribute('data-ga'), true);
+                addRow("მშრალი მატჩი", el.getAttribute('data-cs'), false, true);
+                addRow("გაშვებული გოლი", el.getAttribute('data-ga'), true, true);
             }
+            addRow("ავტოგოლი", el.getAttribute('data-og'), true, true);
+
+            // ბონუსები და მინუსები ჩანს მხოლოდ მაშინ, როცა რეალურად ხდება (0-ის ტოლობისას იმალება)
+            addRow("მეორე ტაიმში თამაში", el.getAttribute('data-playedsh'), false, false);
+            addRow("გოლი საჯარიმოს გარედან", el.getAttribute('data-outbox'), false, false);
+            addRow("გოლი საკუთარი ნახევრიდან", el.getAttribute('data-ownhalf'), false, false);
+            addRow("მოპოვებული პენალტი", el.getAttribute('data-penwon'), false, false);
+            addRow("აკიდებული პენალტი", el.getAttribute('data-pencaused'), true, false);
             
-            detailsHtml += buildStatRow("ავტოგოლი", el.getAttribute('data-og'), true);
+            if (isGk) addRow("აღებული პენალტი", el.getAttribute('data-pensaved'), false, false);
 
-            // ბონუსები ჩანს მხოლოდ მაშინ, თუ 0-ზე მეტია (რომ ტყუილად არ გადაიტვირთოს სია)
-            if (parseInt(el.getAttribute('data-outbox')) > 0) {
-                detailsHtml += buildStatRow("გოლი საჯარიმოს გარედან", el.getAttribute('data-outbox'), false);
-            }
-            if (parseInt(el.getAttribute('data-ownhalf')) > 0) {
-                detailsHtml += buildStatRow("გოლი საკუთარი ნახევრიდან", el.getAttribute('data-ownhalf'), false);
-            }
-            if (parseInt(el.getAttribute('data-penwon')) > 0) {
-                detailsHtml += buildStatRow("პენალტის მოპოვება", el.getAttribute('data-penwon'), false);
-            }
-            if (parseInt(el.getAttribute('data-pencaused')) > 0) {
-                detailsHtml += buildStatRow("პენალტის აკიდება", el.getAttribute('data-pencaused'), true);
-            }
-            if (isGk && parseInt(el.getAttribute('data-pensaved')) > 0) {
-                detailsHtml += buildStatRow("აღებული პენალტი", el.getAttribute('data-pensaved'), false);
-            }
-
-            // ჩასმა და გამოჩენა
             document.getElementById('detailedStatsList').innerHTML = detailsHtml;
+            
+            // ფანჯრის გახსნისას ჩამოსაშლელი სია დახურულია
+            document.getElementById('detailedStatsContainer').style.display = 'none';
+            document.getElementById('accordionIcon').style.transform = 'rotate(0deg)';
+            
             document.getElementById('statsModal').style.display = 'flex';
+        }
+
+        // Accordion-ის ჩამოშლის/აკეცვის ფუნქცია
+        function toggleAccordion() {
+            let container = document.getElementById('detailedStatsContainer');
+            let icon = document.getElementById('accordionIcon');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                container.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
         }
 
         function closeStatsModal() {
