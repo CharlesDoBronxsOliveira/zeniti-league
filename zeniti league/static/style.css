@@ -416,81 +416,66 @@ tbody tr:hover {
     transition: 0.2s;
 }
 
-.matches-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    width: 100%;
-    max-width: 1000px;
-    margin-top: 30px;
+/* ========================================= */
+/* 📅 მოსალოდნელი თამაშების (Matches) სტილები */
+/* ========================================= */
+.schedule-container {
+    width: 100%; max-width: 900px;
+    background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(10px);
+    border-radius: 15px; border: 1px solid rgba(57, 255, 20, 0.2);
+    padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    margin: 20px auto 50px auto;
 }
 
-.match-card {
-    background: #1a1a1a;
-    padding: 25px;
-    border-radius: 15px;
-    border-left: 4px solid #39FF14; 
-    transition: 0.3s;
+.match-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: 0.3s;
 }
 
-.match-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(57, 255, 20, 0.1);
+.match-row:hover {
+    background: rgba(57, 255, 20, 0.05); border-color: rgba(57, 255, 20, 0.3);
+    transform: translateY(-2px);
 }
 
 .match-date {
-    color: #39FF14;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 20px; 
-    text-transform: uppercase;
-    text-align: center;  
-    width: 100%;         
-    display: block;
+    width: 150px; font-family: 'Orbitron', sans-serif; color: #aaa; font-size: 0.9rem; text-align: center;
+}
+
+.match-date span { 
+    display: block; color: #39FF14; font-size: 1.2rem; font-weight: bold; margin-top: 5px; 
 }
 
 .match-teams {
-    display: flex;
-    justify-content: space-around; 
-    align-items: center;
-    margin-bottom: 20px;
-    width: 100%;
+    flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px;
 }
 
-.team {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 40%;
+.team { 
+    display: flex; flex-direction: column; align-items: center; width: 120px; 
 }
 
-.team img {
-    width: 50px;
-    height: 50px;
-    background: transparent !important; 
-    border-radius: 50%;
-    padding: 2px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+.team img { 
+    width: 50px; height: 50px; object-fit: contain; margin-bottom: 10px;
+    background: transparent !important; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
 }
 
-.vs {
-    font-weight: 900;
-    font-style: italic;
-    color: #444;
+.team span { 
+    font-weight: 600; font-size: 1.1rem; text-align: center; 
+}
+
+.vs-badge {
+    background: #111; border: 1px solid #333; color: #888; font-family: 'Bebas Neue', sans-serif;
+    padding: 8px 15px; border-radius: 8px; font-size: 1.2rem; letter-spacing: 1px;
 }
 
 .match-venue {
-    font-size: 0.8rem;
-    color: #888;
-    border-top: 1px solid #333;
-    padding-top: 10px;
-    text-align: center;
-    width: 100%;
-    display: block;
+    width: 150px; text-align: center; font-size: 0.85rem; color: #888;
+    border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;
 }
 
+/* ========================================= */
+/* ⚽ ბომბარდირების ცხრილის სტილები */
+/* ========================================= */
 .scorer-wrapper table {
     border-spacing: 0;
     width: 100%;
@@ -553,6 +538,9 @@ tbody tr:hover {
     object-fit: cover;
 }
 
+/* ========================================= */
+/* 🛡️ ფინალისტი გუნდების ბარათები */
+/* ========================================= */
 .zn-team-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -664,6 +652,9 @@ tbody tr:hover {
     border: 1px solid #e74c3c;
 }
 
+/* ========================================= */
+/* სხვადასხვა */
+/* ========================================= */
 .players-section {
     max-width: 600px;
     margin: 0 auto;
@@ -734,7 +725,7 @@ tbody tr:hover {
     box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
     z-index: 100;
     border-radius: 8px;
-    border: 1px solid var(--zeniti-green);
+    border: 1px solid #39FF14;
     top: 100%;
 }
 
@@ -745,6 +736,19 @@ tbody tr:hover {
     display: block;
     font-size: 0.9rem;
     transition: 0.3s;
+}
+
+.dropdown-content a:hover {
+    background-color: #39FF14;
+    color: black;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropbtn::after {
+    margin-left: 5px;
 }
 
 footer {
@@ -768,7 +772,7 @@ footer p {
 }
 
 footer strong {
-    color: var(--zen-green); 
+    color: #39FF14; 
     text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
@@ -793,19 +797,6 @@ footer strong {
 .social-links a:hover {
     transform: translateY(-3px);
     background: rgba(255, 255, 255, 0.1);
-}
-
-.dropdown-content a:hover {
-    background-color: var(--zeniti-green);
-    color: black;
-}
-
-.dropdown:hover .dropdown-content {
-    display: block;
-}
-
-.dropbtn::after {
-    margin-left: 5px;
 }
 
 /* ========================================= */
@@ -860,14 +851,14 @@ footer strong {
         min-width: 600px;
     }
 
-    /* თამაშების და გუნდების ბარათები */
-    .matches-grid, .zn-team-container {
+    /* ფინალისტი გუნდების ბარათები */
+    .zn-team-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 20px;
     }
-    .match-card, .zn-card, .zn-card-link {
+    .zn-card, .zn-card-link {
         width: 100%;
         max-width: 350px;
     }
@@ -906,17 +897,19 @@ footer strong {
         font-size: 1.6rem;
     }
 
+    /* 📱 მობილურის თამაშების ცხრილის მორგება */
+    .match-row { flex-direction: column; gap: 15px; padding: 15px; }
+    .match-date, .match-venue { width: 100%; border: none; padding: 0; }
+    .match-venue { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
     .match-teams {
         flex-direction: row; 
         justify-content: space-around;
         gap: 5px;
     }
-
     .team img {
         width: 40px; 
         height: 40px;
     }
-
     .team span {
         font-size: 0.9rem; 
     }
