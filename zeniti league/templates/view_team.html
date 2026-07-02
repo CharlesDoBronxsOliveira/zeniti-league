@@ -2,9 +2,17 @@
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ team_name }} - Zeniti Fantasy</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+
+        :root {
+            --zeniti-green: #2ecc71;
+            --pitch-green: #1a472a; 
+            --pitch-dark: #163d24; 
+            --pitch-lines: rgba(46, 204, 113, 0.4); 
+        }
 
         body {
             margin: 0; background: #0b0b0b; color: white;
@@ -14,31 +22,42 @@
             display: flex; flex-direction: column; align-items: center; padding-bottom: 50px;
         }
 
-        .header-banner { margin-top: 40px; text-align: center; }
+        .header-banner { margin-top: 40px; text-align: center; width: 90%; }
         .header-banner h1 { color: #2ecc71; font-family: 'Bebas Neue', sans-serif; font-size: 3rem; margin: 0; letter-spacing: 2px; }
         .header-banner p { color: #aaa; margin-top: 5px; font-size: 1rem; }
 
+        /* 🟢 სტადიონის ვიზუალი pick_team-ის იდენტური გახდა */
         .pitch-container {
-            width: 100%; max-width: 1000px; margin-top: 30px;
-            background: rgba(26, 71, 42, 0.85);
-            border: 3px solid #2ecc71; border-radius: 20px;
-            padding: 40px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            width: 100%; max-width: 950px; margin-top: 30px;
+            background-color: var(--pitch-green);
+            background-image: repeating-linear-gradient(to bottom, var(--pitch-green), var(--pitch-green) 60px, var(--pitch-dark) 60px, var(--pitch-dark) 120px);
+            border: 3px solid var(--zeniti-green); border-radius: 20px;
+            padding: 40px 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            position: relative; overflow: hidden; box-sizing: border-box;
         }
 
-        .pitch-line { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
+        /* სტადიონის ცენტრის წრე */
+        .pitch-container::after {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 150px; height: 150px; border: 2px solid var(--pitch-lines); border-radius: 50%;
+            pointer-events: none; z-index: 0;
+        }
 
+        .pitch-line { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; position: relative; z-index: 2; }
+
+        /* მოთამაშის ბარათი */
         .read-only-card {
-            background: rgba(0,0,0,0.6); border: 1px solid rgba(46, 204, 113, 0.4);
-            border-radius: 12px; padding: 15px; width: 100px; text-align: center;
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 12px; padding: 10px; width: 85px; text-align: center;
             position: relative; transition: 0.3s; display: flex; flex-direction: column; align-items: center;
-            cursor: pointer;
+            cursor: pointer; box-sizing: border-box;
         }
 
-        .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); background: rgba(46, 204, 113, 0.1); }
+        .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); background: rgba(0,0,0,0.7); }
 
         /* CSS Kits */
         .css-kit {
-            width: 45px; height: 50px; position: relative; margin-bottom: 8px;
+            width: 45px; height: 50px; position: relative; margin-bottom: 6px;
             clip-path: polygon(20% 0%, 35% 0%, 50% 15%, 65% 0%, 80% 0%, 100% 25%, 85% 40%, 75% 30%, 75% 100%, 25% 100%, 25% 30%, 15% 40%, 0% 25%);
             background-color: #333;
         }
@@ -57,23 +76,26 @@
         .kit-shakhtiori { background: repeating-linear-gradient(to right, #1C2D4D, #1C2D4D 8px, #FFFFFF 8px, #FFFFFF 16px); }
         .kit-default { background: #555; }
 
-        .p-name { font-size: 0.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-        .p-pts { color: #00ff87; font-weight: 900; font-size: 0.9rem; margin-top: 5px; background: rgba(0,0,0,0.5); border-radius: 5px; padding: 2px 6px; }
+        .p-name { font-size: 0.75rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .p-pts { color: #00ff87; font-weight: 900; font-size: 0.75rem; margin-top: 4px; background: rgba(0,0,0,0.6); border-radius: 4px; padding: 2px 6px; }
 
         .captain-badge {
-            position: absolute; top: -10px; left: -10px; background: #f1c40f; color: black;
-            font-weight: 900; width: 25px; height: 25px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; font-size: 14px; border: 2px solid #1a1a1a;
-            box-shadow: 0 0 10px rgba(241, 196, 15, 0.6); z-index: 5;
+            position: absolute; top: -8px; left: -8px; background: #f1c40f; color: black;
+            font-weight: 900; width: 22px; height: 22px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 12px; border: 2px solid #1a1a1a;
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.6); z-index: 5;
         }
 
         /* მოდალური ფანჯრის სტილები */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: #1a1a1a; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; border-radius: 20px; border: 1px solid rgba(46, 204, 113, 0.3); padding: 25px; position: relative; text-align: center; }
+        .modal-content { background: #1a1a1a; width: 92%; max-width: 400px; max-height: 90vh; overflow-y: auto; border-radius: 20px; border: 1px solid rgba(46, 204, 113, 0.3); padding: 20px; position: relative; text-align: center; box-sizing: border-box; }
         .modal-content::-webkit-scrollbar { display: none; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; }
         .close-modal { cursor: pointer; color: #888; font-size: 1.8rem; line-height: 1; transition: 0.3s; }
         .close-modal:hover { color: #ff4757; }
+
+        .stat-box { background: #111; padding: 12px 2px; border-radius: 12px; border: 1px solid #333; }
+        .stat-box-premium { background: rgba(46, 204, 113, 0.05); padding: 12px 2px; border-radius: 12px; border: 1px solid rgba(46, 204, 113, 0.4); box-shadow: 0 4px 10px rgba(46, 204, 113, 0.1); }
 
         /* ========================================= */
         /* 📱 მობილურის ვერსია (RESPONSIVE დიზაინი) */
@@ -82,26 +104,30 @@
             .header-banner h1 { font-size: 2.2rem; }
             .header-banner p { font-size: 0.85rem; }
             
-            .pitch-container { padding: 25px 5px; margin-top: 15px; border-width: 2px; border-radius: 15px; }
-            .pitch-line { gap: 6px; margin-bottom: 20px; }
+            .pitch-container { 
+                width: 96%; padding: 20px 2px; margin-top: 15px; border-width: 2px; 
+                background-image: repeating-linear-gradient(to bottom, var(--pitch-green), var(--pitch-green) 40px, var(--pitch-dark) 40px, var(--pitch-dark) 80px);
+            }
+            .pitch-line { gap: 4px; margin-bottom: 15px; }
             
-            .read-only-card { width: 60px; padding: 10px 4px; border-radius: 8px; }
-            .css-kit { width: 32px; height: 38px; margin-bottom: 5px; }
+            /* ბარათების ზუსტი მორგება */
+            .read-only-card { width: 68px; padding: 6px 2px; border-radius: 8px; }
+            .css-kit { width: 34px; height: 38px; margin-bottom: 4px; }
             .p-name { font-size: 0.65rem; }
-            .p-pts { font-size: 0.75rem; padding: 2px 4px; }
+            .p-pts { font-size: 0.65rem; padding: 2px 4px; margin-top: 3px; }
             
-            .captain-badge { width: 20px; height: 20px; font-size: 11px; top: -8px; left: -8px; }
-            
-            .modal-content { padding: 20px 15px; }
-            #modalPlayerName { font-size: 1.5rem !important; }
+            /* მოდალის კომპაქტურობა */
+            .modal-content { padding: 15px; }
+            #modalPlayerName { font-size: 1.4rem !important; }
             #modalPlayerPts { font-size: 2.2rem !important; }
+            .stat-box, .stat-box-premium { padding: 8px 2px; }
             #stat1Value, #stat2Value, #modalPlayerPrice { font-size: 1.2rem !important; }
         }
 
-        @media (max-width: 400px) {
-            .read-only-card { width: 55px; padding: 8px 2px; }
-            .css-kit { width: 28px; height: 32px; }
-            .pitch-line { gap: 4px; }
+        @media (max-width: 360px) {
+            .read-only-card { width: 60px; }
+            .css-kit { width: 30px; height: 34px; }
+            .pitch-line { gap: 2px; }
         }
     </style>
 </head>
@@ -201,37 +227,37 @@
                 <span id="modalPlayerName" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; color: white;">მოთამაშე</span>
                 <span class="close-modal" onclick="closeStatsModal()">&times;</span>
             </div>
-            <div id="modalPlayerInfo" style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px; font-weight: bold;">გუნდი | პოზიცია</div>
+            <div id="modalPlayerInfo" style="color: #aaa; font-size: 0.9rem; margin-bottom: 10px; font-weight: bold;">გუნდი | პოზიცია</div>
             
-            <div style="font-size: 3rem; font-family: 'Orbitron', sans-serif; color: #00ff87; font-weight: 900; margin: 15px 0; text-shadow: 0 0 15px rgba(0, 255, 135, 0.3);">
+            <div style="font-size: 2.8rem; font-family: 'Orbitron', sans-serif; color: #00ff87; font-weight: 900; margin: 10px 0; text-shadow: 0 0 15px rgba(0, 255, 135, 0.3);">
                 <span id="modalPlayerPts">0</span> <span style="font-size: 1rem; color: white; text-shadow: none;">ქულა</span>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 25px;">
-                <div style="background: #111; padding: 15px 5px; border-radius: 12px; border: 1px solid #333;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 20px;">
+                <div class="stat-box">
                     <span id="stat1Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">გოლი</span>
-                    <div id="stat1Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
+                    <div id="stat1Value" style="font-size: 1.4rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
                 </div>
-                <div style="background: #111; padding: 15px 5px; border-radius: 12px; border: 1px solid #333;">
-                    <span id="stat2Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">ასისტი</span>
-                    <div id="stat2Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
+                <div class="stat-box">
+                    <span id="stat2Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">პასი</span>
+                    <div id="stat2Value" style="font-size: 1.4rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
                 </div>
-                <div style="background: rgba(46, 204, 113, 0.1); padding: 15px 5px; border-radius: 12px; border: 1px solid #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.1);">
+                <div class="stat-box-premium">
                     <span style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #2ecc71;">ფასი</span>
-                    <div id="modalPlayerPrice" style="font-size: 1.5rem; font-weight: 900; margin-top: 5px; color: #fff;">0M</div>
+                    <div id="modalPlayerPrice" style="font-size: 1.4rem; font-weight: 900; margin-top: 5px; color: #fff;">0M</div>
                 </div>
             </div>
 
-            <div id="accordionToggle" onclick="toggleAccordion()" style="margin-top: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-                <span style="font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: bold; color: white;">📊 დეტალური სტატისტიკა</span>
+            <div id="accordionToggle" onclick="toggleAccordion()" style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;">
+                <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: bold; color: white;">📊 დეტალური სტატისტიკა</span>
                 <span id="accordionIcon" style="transition: 0.3s; color: #888;">▼</span>
             </div>
 
-            <div id="detailedStatsContainer" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-top: none; border-radius: 0 0 12px 12px; padding: 15px; margin-top: -5px; text-align: left;">
-                <div id="detailedStatsList" style="display: flex; flex-direction: column; gap: 5px;"></div>
+            <div id="detailedStatsContainer" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-top: none; border-radius: 0 0 12px 12px; padding: 12px; margin-top: -5px; text-align: left;">
+                <div id="detailedStatsList" style="display: flex; flex-direction: column; gap: 3px;"></div>
             </div>
             
-            <button onclick="closeStatsModal()" style="width: 100%; margin-top: 20px; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-family: 'Inter', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#444'" onmouseout="this.style.background='#333'">
+            <button onclick="closeStatsModal()" style="width: 100%; margin-top: 20px; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-family: 'Inter', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;">
                 დახურვა
             </button>
         </div>
@@ -259,22 +285,20 @@
                 document.getElementById('stat2Value').innerText = el.getAttribute('data-assist');
             }
 
-            // 🟢 დეტალური სტატისტიკის გენერატორი ფუნქცია
             let detailsHtml = "";
             const addRow = (label, val, isNegative, forceShow = false) => {
                 let v = parseInt(val) || 0;
                 if (v > 0 || forceShow) {
                     let color = v > 0 ? (isNegative ? '#ff4757' : '#2ecc71') : '#888';
                     detailsHtml += `
-                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px 0; font-family: 'Inter', sans-serif;">
-                            <span style="color:#aaa; font-size: 0.85rem;">${label}</span>
-                            <span style="color:${color}; font-weight:bold; font-size: 0.95rem;">${v}</span>
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:6px 0; font-family: 'Inter', sans-serif;">
+                            <span style="color:#aaa; font-size: 0.8rem;">${label}</span>
+                            <span style="color:${color}; font-weight:bold; font-size: 0.9rem;">${v}</span>
                         </div>
                     `;
                 }
             };
 
-            // ძირითადი სტატისტიკა ყოველთვის ჩანს (forceShow = true)
             addRow("თამაშში მონაწილეობა", el.getAttribute('data-playedm'), false, true);
             addRow("გუნდის გამარჯვება", el.getAttribute('data-teamw'), false, true);
             addRow("ყვითელი ბარათი", el.getAttribute('data-yellow'), true, true);
@@ -286,7 +310,6 @@
             }
             addRow("ავტოგოლი", el.getAttribute('data-og'), true, true);
 
-            // ბონუსები და მინუსები ჩანს მხოლოდ მაშინ, როცა რეალურად ხდება (0-ის ტოლობისას იმალება)
             addRow("მეორე ტაიმში თამაში", el.getAttribute('data-playedsh'), false, false);
             addRow("გოლი საჯარიმოს გარედან", el.getAttribute('data-outbox'), false, false);
             addRow("გოლი საკუთარი ნახევრიდან", el.getAttribute('data-ownhalf'), false, false);
@@ -296,15 +319,12 @@
             if (isGk) addRow("აღებული პენალტი", el.getAttribute('data-pensaved'), false, false);
 
             document.getElementById('detailedStatsList').innerHTML = detailsHtml;
-            
-            // ფანჯრის გახსნისას ჩამოსაშლელი სია დახურულია
             document.getElementById('detailedStatsContainer').style.display = 'none';
             document.getElementById('accordionIcon').style.transform = 'rotate(0deg)';
             
             document.getElementById('statsModal').style.display = 'flex';
         }
 
-        // Accordion-ის ჩამოშლის/აკეცვის ფუნქცია
         function toggleAccordion() {
             let container = document.getElementById('detailedStatsContainer');
             let icon = document.getElementById('accordionIcon');
