@@ -31,13 +31,12 @@
             background: rgba(0,0,0,0.6); border: 1px solid rgba(46, 204, 113, 0.4);
             border-radius: 12px; padding: 15px; width: 100px; text-align: center;
             position: relative; transition: 0.3s; display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; /* 🟢 მაუსის მიტანისას ხელის გამოჩენა */
         }
 
-        .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
+        .read-only-card:hover { transform: translateY(-5px); border-color: #2ecc71; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); background: rgba(46, 204, 113, 0.1); }
 
-        /* ========================================= */
-        /* 👕 CSS ფორმები (Kits) გუნდებისთვის */
-        /* ========================================= */
+        /* CSS ფორმები (Kits) გუნდებისთვის */
         .css-kit {
             width: 45px; height: 50px; position: relative; margin-bottom: 8px;
             clip-path: polygon(20% 0%, 35% 0%, 50% 15%, 65% 0%, 80% 0%, 100% 25%, 85% 40%, 75% 30%, 75% 100%, 25% 100%, 25% 30%, 15% 40%, 0% 25%);
@@ -67,11 +66,17 @@
             align-items: center; justify-content: center; font-size: 14px; border: 2px solid #1a1a1a;
             box-shadow: 0 0 10px rgba(241, 196, 15, 0.6); z-index: 5;
         }
+
+        /* 🟢 მოდალური ფანჯრის სტილები */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 20px; border: 1px solid rgba(46, 204, 113, 0.3); padding: 25px; position: relative; text-align: center; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; }
+        .close-modal { cursor: pointer; color: #888; font-size: 1.8rem; line-height: 1; transition: 0.3s; }
+        .close-modal:hover { color: #ff4757; }
     </style>
 </head>
 <body>
 
-    <!-- 🟢 Jinja მაკრო - ავტომატურად უკავშირებს ბაზის სახელს CSS კლასს -->
     {% set team_class_map = {
         'ფენიქსი': 'phoenix',
         'თეთროსანი': 'tetrosani',
@@ -85,7 +90,11 @@
 
     {% macro render_card(p) %}
         {% set kit_class = team_class_map.get(p.real_team|lower|trim, 'default') %}
-        <div class="read-only-card">
+        {% set is_gk = 'true' if p.position.strip() == 'მეკარე' else 'false' %}
+        {% set stat1 = (p.saves or 0) if p.position.strip() == 'მეკარე' else (p.goal or 0) %}
+        {% set stat2 = (p.clean_sheet_count or p.clean_sheet or 0) if p.position.strip() == 'მეკარე' else (p.assist or 0) %}
+        
+        <div class="read-only-card" onclick="openStatsModal('{{ p.name }}', '{{ p.real_team }}', '{{ p.position }}', '{{ p.total_points }}', '{{ stat1 }}', '{{ stat2 }}', '{{ p.price }}', '{{ is_gk }}')">
             {% if p.is_captain %}<div class="captain-badge">C</div>{% endif %}
             <div class="css-kit kit-{{ kit_class }}">
                 <div class="kit-shadow"></div>
@@ -98,32 +107,28 @@
     <div class="header-banner">
         <h1>{{ team_name }}</h1>
         <p>მომხმარებელი: <b>{{ username }}</b> | ჯამური ქულა: <b style="color: #2ecc71; font-size: 1.2rem;">{{ total_points }}</b></p>
-        <a href="{{ url_for('leaderboard') }}" style="color: #3498db; text-decoration: none; font-weight: bold;">← ცხრილში დაბრუნება</a>
+        <a href="{{ url_for('leaderboard') }}" style="color: #3498db; text-decoration: none; font-weight: bold; margin-top: 10px; display: inline-block;">← ცხრილში დაბრუნება</a>
     </div>
 
     <div class="pitch-container">
-        <!-- თავდამსხმელები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'თავდამსხმელი' %}
                 {{ render_card(p) }}
             {% endfor %}
         </div>
 
-        <!-- ნახევარმცველები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'ნახევარმცველი' %}
                 {{ render_card(p) }}
             {% endfor %}
         </div>
 
-        <!-- მცველები -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მცველი' %}
                 {{ render_card(p) }}
             {% endfor %}
         </div>
 
-        <!-- მეკარე -->
         <div class="pitch-line">
             {% for p in team if p.position.strip() == 'მეკარე' %}
                 {{ render_card(p) }}
@@ -131,5 +136,77 @@
         </div>
     </div>
 
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalPlayerName" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; color: white;">მოთამაშე</span>
+                <span class="close-modal" onclick="closeStatsModal()">&times;</span>
+            </div>
+            <div id="modalPlayerInfo" style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px; font-weight: bold;">გუნდი | პოზიცია</div>
+            
+            <div style="font-size: 3rem; font-family: 'Orbitron', sans-serif; color: #00ff87; font-weight: 900; margin: 15px 0; text-shadow: 0 0 15px rgba(0, 255, 135, 0.3);">
+                <span id="modalPlayerPts">0</span> <span style="font-size: 1rem; color: white; text-shadow: none;">ქულა</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 25px;">
+                <div style="background: #111; padding: 15px 5px; border-radius: 12px; border: 1px solid #333;">
+                    <span id="stat1Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">გოლი</span>
+                    <div id="stat1Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
+                </div>
+                <div style="background: #111; padding: 15px 5px; border-radius: 12px; border: 1px solid #333;">
+                    <span id="stat2Label" style="font-size: 0.75rem; color: #888; text-transform: uppercase;">პასი</span>
+                    <div id="stat2Value" style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: white;">0</div>
+                </div>
+                <div style="background: var(--zeniti-green); padding: 15px 5px; border-radius: 12px; color: black; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);">
+                    <span style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">ფასი</span>
+                    <div id="modalPlayerPrice" style="font-size: 1.5rem; font-weight: 900; margin-top: 5px;">0M</div>
+                </div>
+            </div>
+            
+            <button onclick="closeStatsModal()" style="width: 100%; margin-top: 25px; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; font-family: 'Inter', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#444'" onmouseout="this.style.background='#333'">
+                დახურვა
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function openStatsModal(name, team, pos, pts, stat1, stat2, price, isGk) {
+            // სახელის, გუნდისა და პოზიციის ჩასმა
+            document.getElementById('modalPlayerName').innerText = name;
+            document.getElementById('modalPlayerInfo').innerText = team + " | " + pos;
+            
+            // ქულების და ფასის ჩასმა
+            document.getElementById('modalPlayerPts').innerText = pts;
+            document.getElementById('modalPlayerPrice').innerText = price + "M";
+            
+            // თუ მეკარეა, ტექსტი იცვლება "სეივი" და "მშრალი"-თ
+            if (isGk === 'true') {
+                document.getElementById('stat1Label').innerText = 'სეივი';
+                document.getElementById('stat2Label').innerText = 'მშრალი';
+            } else {
+                document.getElementById('stat1Label').innerText = 'გოლი';
+                document.getElementById('stat2Label').innerText = 'პასი';
+            }
+            
+            // სტატისტიკის მნიშვნელობების ჩასმა
+            document.getElementById('stat1Value').innerText = stat1;
+            document.getElementById('stat2Value').innerText = stat2;
+            
+            // მოდალის გამოჩენა
+            document.getElementById('statsModal').style.display = 'flex';
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').style.display = 'none';
+        }
+
+        // მოდალის გარეთ დაწკაპუნებისას ფანჯრის დახურვა
+        window.onclick = function(event) {
+            let modal = document.getElementById('statsModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
