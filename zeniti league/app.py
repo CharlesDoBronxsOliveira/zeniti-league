@@ -127,6 +127,10 @@ def home():
 def teams():
     return render_template('teams.html')
 
+@app.route('/matches')
+def matches():
+    return render_template('matches.html')
+
 @app.route('/playoffs')
 def playoffs():
     return render_template('playoffs.html')
