@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>მოსალოდნელი თამაშები - Zeniti League</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+
+        :root {
+            --zeniti-green: #2ecc71;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95)), url('/static/images/stadium.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-header {
+            position: fixed; top: 0; left: 0; right: 0; height: 80px;
+            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 50px;
+            border-bottom: 2px solid rgba(46, 204, 113, 0.3); z-index: 1100;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.6rem; letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, var(--zeniti-green));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase;
+        }
+
+        .nav-link {
+            color: #eee; text-decoration: none; font-family: 'Inter', sans-serif; font-size: 0.95rem;
+            font-weight: 600; text-transform: uppercase; padding: 10px 15px; transition: 0.3s;
+        }
+        .nav-link:hover { color: var(--zeniti-green); }
+        .nav-link.active { border-bottom: 3px solid var(--zeniti-green); }
+
+        .content-area {
+            margin-top: 120px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .page-title {
+            color: #00ff87; font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem;
+            letter-spacing: 2px; margin-bottom: 10px; text-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .schedule-container {
+            width: 100%; max-width: 900px;
+            background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(10px);
+            border-radius: 15px; border: 1px solid rgba(46, 204, 113, 0.2);
+            padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            margin-top: 20px;
+        }
+
+        .match-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: 0.3s;
+        }
+        .match-row:hover {
+            background: rgba(46, 204, 113, 0.05); border-color: rgba(46, 204, 113, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .match-date {
+            width: 150px; font-family: 'Orbitron', sans-serif; color: #aaa; font-size: 0.9rem; text-align: center;
+        }
+        .match-date span { display: block; color: var(--zeniti-green); font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+
+        .match-teams {
+            flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px;
+        }
+
+        .team { display: flex; flex-direction: column; align-items: center; width: 120px; }
+        .team img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 10px; }
+        .team span { font-weight: 600; font-size: 1.1rem; text-align: center; }
+
+        .vs-badge {
+            background: #111; border: 1px solid #333; color: #888; font-family: 'Bebas Neue', sans-serif;
+            padding: 8px 15px; border-radius: 8px; font-size: 1.2rem; letter-spacing: 1px;
+        }
+
+        .match-venue {
+            width: 150px; text-align: center; font-size: 0.85rem; color: #888;
+            border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;
+        }
+
+        /* მობილური ვერსია */
+        @media (max-width: 768px) {
+            .match-row { flex-direction: column; gap: 15px; padding: 15px; }
+            .match-date, .match-venue { width: 100%; border: none; padding: 0; }
+            .match-venue { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+            .main-header { padding: 0 20px; }
+            .page-title { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="logo">ZENITI <span style="color:white; -webkit-text-fill-color: white;">LEAGUE</span></div>
+    <nav style="display:flex; gap:15px;">
+        <a href="{{ url_for('home') }}" class="nav-link">მთავარი</a>
+        <a href="{{ url_for('leaderboard') }}" class="nav-link">ცხრილი</a>
+        <a href="{{ url_for('matches') }}" class="nav-link active">თამაშები</a>
+    </nav>
+    <div style="width: 100px;"></div>
+</header>
+
+<main class="content-area">
+    <h1 class="page-title">მოსალოდნელი თამაშები</h1>
+    <p style="color: #888; text-transform: uppercase; letter-spacing: 1px;">2026 წლის საზაფხულო სეზონის კალენდარი</p>
+
+    <div class="schedule-container">
+        
+        <!-- თამაში 1 -->
+        <div class="match-row">
+            <div class="match-date">25 ივლისი<span>20:00</span></div>
+            <div class="match-teams">
+                <div class="team">
+                    <img src="{{ url_for('static', filename='images/phoenix.png') }}" alt="ფენიქსი">
+                    <span>ფენიქსი</span>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="team">
+                    <img src="{{ url_for('static', filename='images/tetrosani.png') }}" alt="თეთროსანი">
+                    <span>თეთროსანი</span>
+                </div>
+            </div>
+            <div class="match-venue">📍 ასფალტ არენა<br><span style="font-size:0.75rem; color:#555;">(ტურნირი 1)</span></div>
+        </div>
+
+        <!-- თამაში 2 -->
+        <div class="match-row">
+            <div class="match-date">25 ივლისი<span>21:00</span></div>
+            <div class="match-teams">
+                <div class="team">
+                    <img src="{{ url_for('static', filename='images/jikhanjuri.png') }}" alt="ჯიხანჯური">
+                    <span>ჯიხანჯური</span>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="team">
+                    <img src="{{ url_for('static', filename='images/la_legends.png') }}" alt="ლეგენდები">
+                    <span>ლეგენდები</span>
+                </div>
+            </div>
+            <div class="match-venue">📍 ასფალტ არენა<br><span style="font-size:0.75rem; color:#555;">(ტურნირი 1)</span></div>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>
