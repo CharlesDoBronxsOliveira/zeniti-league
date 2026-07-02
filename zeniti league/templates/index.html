@@ -16,7 +16,7 @@
         <ul class="nav-links">
             <li><a href="{{ url_for('home') }}">მთავარი</a></li>
             <li><a href="{{ url_for('home') }}#standings">ცხრილი</a></li>
-            <li><a href="{{ url_for('home') }}#matches">თამაშები</a></li>
+            <li><a href="{{ url_for('matches') }}">თამაშები</a></li>
             <li class="dropdown">
                 <a href="#" class="dropbtn">გუნდები ▾</a>
                 <div class="dropdown-content">
@@ -66,7 +66,6 @@
     </div>
 </header>
 
-    <!-- HERO სექცია ტაიმერით -->
     <section class="hero">
         <div class="hero-content">
     <h1>ეს არის ზენითი ლიგა!</h1>
@@ -88,7 +87,6 @@
         </div>
     </section>
 
-    <!-- სატურნირო ცხრილები (A და B ჯგუფი) -->
     <section id="standings" class="container">
         <h2>A ჯგუფი</h2>
         <div class="table-wrapper">
@@ -223,47 +221,6 @@
         </div>
     </section>
 
-    <!-- მომავალი თამაშები -->
-    <section id="matches" class="container">
-        <h2>უკანასკნელი თამაშები</h2>
-        <div class="matches-grid">
-            <div class="match-card">
-                <div class="match-date">20 თებერვალი | 20:00</div>
-                <div class="match-teams">
-                    <div class="team">
-                        <img src="{{ url_for('static', filename='images/phoenix.png') }}" alt="phoenix">
-                        <span>ფენიქსი</span>
-                    </div>
-                    <div class="vs">VS</div>
-                    <div class="team">
-                        <img src="{{ url_for('static', filename='images/centri.png') }}" alt="centri">
-                        <span>ცენტრი</span>
-                    </div>
-                </div>
-                <div class="match-venue">ასფალტ არენა</div>
-            </div>
-            
-            <div class="match-card">
-                <div class="match-date">20 თებერვალი | 21:00</div>
-                <div class="match-teams">
-                    <div class="team">
-                        <img src="{{ url_for('static', filename='images/shakhtiori.png') }}" alt="Center">
-                        <span>შახტიორი</span>
-                    </div>
-                    <div class="vs">VS</div>
-                    <div class="team">
-                        <img src="{{ url_for('static', filename='images/batumi.png') }}" alt="Shakhtiori">
-                        <span>ბათუმი</span>
-                    </div>
-                </div>
-                <div class="match-venue">ასფალტ არენა</div>
-            </div>
-        </div>
-    </section>
-
-    
-
-    <!-- ბომბარდირები (ბოლოში, როგორც გინდოდა) -->
     <section id="top-scorers" class="container">
     <h2>ბომბარდირები</h2>
     <div class="scorer-wrapper"> 
@@ -309,8 +266,6 @@
         </div>
     </section>
 
-    </table> 
-
 <h2 style="text-align: center; margin-top: 40px; color: white;">🛡️ ფინალისტი გუნდები</h2>
 
 <div class="zn-team-container">
@@ -344,7 +299,6 @@
     </a>
 
 </div>
-<footer ...> </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
