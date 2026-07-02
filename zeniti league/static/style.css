@@ -405,10 +405,13 @@ table th, table td {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    object-fit: contain;
-    mix-blend-mode: screen; 
-    filter: brightness(1.1) contrast(1.1); 
+    object-fit: cover; /* შეიცვალა contain-დან cover-ზე, რომ სრულად შეავსოს წრე */
+    object-position: center; /* უზრუნველყოფს ლოგოს ცენტრირებას */
+    mix-blend-mode: normal; /* ამოვიღეთ screen, რათა ფერები არ დაიკარგოს მუქ ფონზე */
+    filter: brightness(1.0) contrast(1.0); 
     background: transparent !important; 
+    border: 1px solid rgba(57, 255, 20, 0.2); /* დამატებითი თხელი მწვანე კანტი მეტი სისუფთავისთვის */
+    padding: 2px; /* ლოგოს ოდნავ აშორებს კანტიდან */
 }
 
 tbody tr:hover {
